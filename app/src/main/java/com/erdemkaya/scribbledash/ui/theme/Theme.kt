@@ -29,6 +29,9 @@ private val LightColorScheme = lightColorScheme(
     onTertiary = Color.White,
     onBackground = Color(0xFF514437),
     onSurface = Color(0xFFA5978A),
+    surfaceContainerHigh = Color(0xFFEEE7E0),
+    surfaceContainerLow = Color(0xFFF8F2ED),
+    surfaceContainerLowest = Color(0xFFE1D5CA)
 )
 
 @Composable
