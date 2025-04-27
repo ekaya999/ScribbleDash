@@ -1,6 +1,8 @@
 package com.erdemkaya.scribbledash.game.presentation
 
 import android.graphics.Path
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -26,6 +28,12 @@ class DrawViewModel(
     private val _drawings = MutableStateFlow<List<PathModel>>(emptyList())
     val drawings: StateFlow<List<PathModel>> = _drawings
 
+    private val _resultExamplePath = mutableStateOf<Path?>(null)
+    val resultExamplePath: State<Path?> = _resultExamplePath
+
+    private val _resultUserPath = mutableStateOf<Path?>(null)
+    val resultUserPath: State<Path?> = _resultUserPath
+
     init {
         loadDrawings()
     }
@@ -34,13 +42,11 @@ class DrawViewModel(
         viewModelScope.launch {
             _drawings.value = drawingLoader.loadAllDrawings()
         }
-        println("Paths: " + drawings.value[0].path.getBounds())
     }
 
-    fun Path.getBounds(): android.graphics.RectF {
-        val bounds = android.graphics.RectF()
-        this.computeBounds(bounds, true)
-        return bounds
+    fun setResultPaths(example: Path, user: Path) {
+        _resultExamplePath.value = example
+        _resultUserPath.value = user
     }
 
     fun onAction(action: DrawingAction) {
@@ -128,4 +134,5 @@ class DrawViewModel(
             }
         }
     }
+
 }

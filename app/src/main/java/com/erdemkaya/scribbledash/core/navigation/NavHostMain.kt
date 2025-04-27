@@ -8,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.erdemkaya.scribbledash.game.presentation.DifficultyScreen
+import com.erdemkaya.scribbledash.game.presentation.DrawResultScreen
 import com.erdemkaya.scribbledash.game.presentation.DrawScreen
 import com.erdemkaya.scribbledash.game.presentation.DrawViewModel
 import com.erdemkaya.scribbledash.game.presentation.HomeScreen
@@ -22,6 +23,9 @@ fun NavHostMain(
     val navController = rememberNavController()
     val drawState by drawViewModel.state.collectAsStateWithLifecycle()
     val drawingsState by drawViewModel.drawings.collectAsStateWithLifecycle()
+
+    val examplePath = drawViewModel.resultExamplePath.value
+    val userPath = drawViewModel.resultUserPath.value
 
     NavHost(
         navController = navController, startDestination = "home"
@@ -47,6 +51,18 @@ fun NavHostMain(
                 undoPaths = drawState.undoPaths,
                 redoPaths = drawState.redoPaths,
                 onAction = drawViewModel::onAction)
+        }
+        composable("result/{score}") {
+            val score = it.arguments?.getString("score")?.toIntOrNull() ?: 0
+            if (examplePath != null && userPath != null) {
+                DrawResultScreen(
+                    modifier = Modifier,
+                    navHostController = navController,
+                    result = score,
+                    examplePath = examplePath,
+                    userPath = userPath
+                )
+            }
         }
     }
 }

@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asComposePath
@@ -49,11 +48,18 @@ import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
 import com.erdemkaya.scribbledash.game.presentation.components.PathData
 import com.erdemkaya.scribbledash.game.presentation.components.PathModel
+import com.erdemkaya.scribbledash.game.presentation.components.calculatePathLength
+import com.erdemkaya.scribbledash.game.presentation.components.calculateScore
+import com.erdemkaya.scribbledash.game.presentation.components.createBitmapFromPath
+import com.erdemkaya.scribbledash.game.presentation.components.normalizePathForComparison
 import com.erdemkaya.scribbledash.game.presentation.components.normalizePathToCanvas
 import com.erdemkaya.scribbledash.ui.theme.Success
 import com.erdemkaya.scribbledash.ui.theme.onSurfaceVariant
 import kotlinx.coroutines.delay
+import org.koin.androidx.compose.koinViewModel
 import kotlin.math.abs
+import android.graphics.Path as AndroidPath
+import androidx.compose.ui.graphics.Path as ComposePath
 
 @Composable
 fun DrawScreen(
@@ -65,13 +71,13 @@ fun DrawScreen(
     undoPaths: List<PathData>,
     redoPaths: List<PathData>,
     onAction: (DrawingAction) -> Unit,
-
+    drawViewModel: DrawViewModel = koinViewModel()
     ) {
     val canUndo = undoPaths.isNotEmpty()
     val canRedo = redoPaths.isNotEmpty()
     val canClear = paths.isNotEmpty() || currentPath != null
 
-    var stateTest by remember {
+    var drawMode by remember {
         mutableStateOf(false)
     }
 
@@ -79,13 +85,13 @@ fun DrawScreen(
         mutableIntStateOf(3)
     }
 
-    LaunchedEffect(key1 = stateTest) {
-        if (!stateTest) {
+    LaunchedEffect(key1 = drawMode) {
+        if (!drawMode) {
             while (countdown > 0) {
                 delay(1000L)
                 countdown--
             }
-            stateTest = true
+            drawMode = true
         }
     }
 
@@ -125,7 +131,7 @@ fun DrawScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .then(
-                            if (stateTest) Modifier.pointerInput(Unit) {
+                            if (drawMode) Modifier.pointerInput(Unit) {
                                 detectDragGestures(
                                     onDragStart = { onAction(DrawingAction.OnNewPathStart) },
                                     onDragEnd = { onAction(DrawingAction.OnPathEnd) },
@@ -162,7 +168,7 @@ fun DrawScreen(
                         strokeWidth = 2f
                     )
 
-                    if (stateTest) {
+                    if (drawMode) {
                         paths.fastForEach { pathData ->
                             drawPath(
                                 path = pathData.path,
@@ -194,7 +200,7 @@ fun DrawScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            if (stateTest) {
+            if (drawMode) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -237,7 +243,60 @@ fun DrawScreen(
                         )
                     }
                     Button(
-                        onClick = { onAction(DrawingAction.OnClearCanvasClick) },
+                        onClick = {
+                            val userPath = AndroidPath().apply {
+                                paths.forEach { pathData ->
+                                    addPath(pathData.path.toAndroidPath())
+                                }
+                            }
+
+                            val userBounds = RectF()
+                            userPath.computeBounds(userBounds, true)
+
+                            val examplePath = drawings.randomOrNull()?.path ?: return@Button
+                            val exampleBounds = RectF()
+                            examplePath.computeBounds(exampleBounds, true)
+
+                            val targetSize = 1024f
+
+                            val normalizedUserPath = normalizePathForComparison(
+                                userPath, userBounds,
+                                userStrokeWidth = 3f,
+                                exampleStrokeWidth = 3f * 15f,
+                                isUser = true,
+                                targetSize = targetSize
+                            )
+
+                            val normalizedExamplePath = normalizePathForComparison(
+                                examplePath, exampleBounds,
+                                userStrokeWidth = 3f,
+                                exampleStrokeWidth = 3f * 15f,
+                                isUser = false,
+                                targetSize = targetSize
+                            )
+                            val userBitmap = createBitmapFromPath(normalizedUserPath, 3f, 1024)
+                            val exampleBitmap =
+                                createBitmapFromPath(normalizedExamplePath, 3f * 15f, 1024)
+                            val coveragePercentage =
+                                calculateScore(userBitmap, exampleBitmap) * 100f
+                            val userPathLength = calculatePathLength(userPath)
+                            val examplePathLength = calculatePathLength(examplePath)
+
+                            val lengthRatio = userPathLength / examplePathLength
+                            val missingLengthPenalty = if (lengthRatio < 0.7f) {
+                                100f - (lengthRatio * 100f)
+                            } else {
+                                0f
+                            }
+                            var finalScore = coveragePercentage - missingLengthPenalty
+                            finalScore = finalScore.coerceIn(0f, 100f)
+
+                            drawViewModel.setResultPaths(
+                                example = normalizedExamplePath,
+                                user = normalizedUserPath
+                            )
+                            navHostController.navigate("result/${finalScore.toInt()}")
+                        },
                         enabled = canClear,
                         modifier = Modifier
                             .weight(2f)
@@ -248,7 +307,7 @@ fun DrawScreen(
                         )
                     ) {
                         Text(
-                            "Clear Canvas".uppercase(),
+                            "Done".uppercase(),
                             style = MaterialTheme.typography.headlineSmall,
                             color = if (canClear) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(
                                 alpha = .8f
@@ -273,7 +332,7 @@ fun DrawScreen(
 private fun DrawScope.drawPath(
     path: List<Offset>, color: Color, thickness: Float = 10f
 ) {
-    val smoothedPath = Path().apply {
+    val smoothedPath = ComposePath().apply {
         if (path.isNotEmpty()) {
             moveTo(path.first().x, path.first().y)
 
@@ -296,4 +355,19 @@ private fun DrawScope.drawPath(
             width = thickness, cap = StrokeCap.Round, join = StrokeJoin.Round
         )
     )
+}
+
+fun List<Offset>.toAndroidPath(): AndroidPath {
+    val androidPath = AndroidPath()
+
+    if (this.isNotEmpty()) {
+        androidPath.moveTo(this.first().x, this.first().y)
+
+        for (i in 1 until this.size) {
+            val current = this[i]
+            androidPath.lineTo(current.x, current.y)
+        }
+    }
+
+    return androidPath
 }
