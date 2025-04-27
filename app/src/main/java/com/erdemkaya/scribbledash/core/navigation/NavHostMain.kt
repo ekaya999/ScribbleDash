@@ -21,6 +21,7 @@ fun NavHostMain(
 
     val navController = rememberNavController()
     val drawState by drawViewModel.state.collectAsStateWithLifecycle()
+    val drawingsState by drawViewModel.drawings.collectAsStateWithLifecycle()
 
     NavHost(
         navController = navController, startDestination = "home"
@@ -41,6 +42,7 @@ fun NavHostMain(
                 modifier = Modifier,
                 navHostController = navController,
                 paths = drawState.paths,
+                drawings = drawingsState,
                 currentPath = drawState.currentPath,
                 undoPaths = drawState.undoPaths,
                 redoPaths = drawState.redoPaths,

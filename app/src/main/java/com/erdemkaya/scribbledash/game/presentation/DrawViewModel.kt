@@ -1,21 +1,47 @@
 package com.erdemkaya.scribbledash.game.presentation
 
+import android.graphics.Path
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.erdemkaya.scribbledash.game.presentation.components.DrawingLoader
 import com.erdemkaya.scribbledash.game.presentation.components.PathData
+import com.erdemkaya.scribbledash.game.presentation.components.PathModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 
-class DrawViewModel : ViewModel() {
+class DrawViewModel(
+    private val drawingLoader: DrawingLoader
+) : ViewModel() {
     private val _state = MutableStateFlow(DrawingState())
     val state = _state.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000L), DrawingState()
     )
+
+    private val _drawings = MutableStateFlow<List<PathModel>>(emptyList())
+    val drawings: StateFlow<List<PathModel>> = _drawings
+
+    init {
+        loadDrawings()
+    }
+
+    private fun loadDrawings() {
+        viewModelScope.launch {
+            _drawings.value = drawingLoader.loadAllDrawings()
+        }
+        println("Paths: " + drawings.value[0].path.getBounds())
+    }
+
+    fun Path.getBounds(): android.graphics.RectF {
+        val bounds = android.graphics.RectF()
+        this.computeBounds(bounds, true)
+        return bounds
+    }
 
     fun onAction(action: DrawingAction) {
         when (action) {
@@ -45,7 +71,6 @@ class DrawViewModel : ViewModel() {
         _state.update {
             it.copy(
                 currentPath = PathData(
-                    id = System.currentTimeMillis().toString(),
                     path = emptyList()
                 )
             )

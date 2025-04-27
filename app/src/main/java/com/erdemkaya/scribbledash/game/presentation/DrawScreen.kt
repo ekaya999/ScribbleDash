@@ -20,6 +20,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -28,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.asComposePath
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -40,6 +45,7 @@ import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
 import com.erdemkaya.scribbledash.game.presentation.components.PathData
+import com.erdemkaya.scribbledash.game.presentation.components.PathModel
 import com.erdemkaya.scribbledash.ui.theme.Success
 import com.erdemkaya.scribbledash.ui.theme.onSurfaceVariant
 import kotlin.math.abs
@@ -49,14 +55,22 @@ fun DrawScreen(
     modifier: Modifier = Modifier,
     navHostController: NavHostController,
     paths: List<PathData>,
+    drawings: List<PathModel>,
     currentPath: PathData?,
     undoPaths: List<PathData>,
     redoPaths: List<PathData>,
     onAction: (DrawingAction) -> Unit,
+
 ) {
     val canUndo = undoPaths.isNotEmpty()
     val canRedo = redoPaths.isNotEmpty()
     val canClear = paths.isNotEmpty() || currentPath != null
+
+    var stateTest by remember {
+        mutableStateOf(true)
+    }
+
+    stateTest = false
 
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
@@ -86,62 +100,72 @@ fun DrawScreen(
                     )
                     .background(Color.White)
             ) {
-                Canvas(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .pointerInput(Unit) {
-                            detectDragGestures(
-                                onDragStart = {
-                                    onAction(DrawingAction.OnNewPathStart)
-                                },
-                                onDragEnd = {
-                                    onAction(DrawingAction.OnPathEnd)
-                                },
-                                onDrag = { change, _ ->
-                                    onAction(DrawingAction.OnDraw(change.position))
-                                },
-                                onDragCancel = {
-                                    onAction(DrawingAction.OnPathEnd)
-                                }
-                            )
-                        }) {
-                    val thirdWidth = size.width / 3
-                    val thirdHeight = size.height / 3
+                if (stateTest) {
+                    Canvas(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectDragGestures(
+                                    onDragStart = {
+                                        onAction(DrawingAction.OnNewPathStart)
+                                    },
+                                    onDragEnd = {
+                                        onAction(DrawingAction.OnPathEnd)
+                                    },
+                                    onDrag = { change, _ ->
+                                        onAction(DrawingAction.OnDraw(change.position))
+                                    },
+                                    onDragCancel = {
+                                        onAction(DrawingAction.OnPathEnd)
+                                    }
+                                )
+                            }) {
+                        val thirdWidth = size.width / 3
+                        val thirdHeight = size.height / 3
 
-                    drawLine(
-                        color = onSurfaceVariant,
-                        start = Offset(thirdWidth, 0f),
-                        end = Offset(thirdWidth, size.height),
-                        strokeWidth = 2f
-                    )
-                    drawLine(
-                        color = onSurfaceVariant,
-                        start = Offset(2 * thirdWidth, 0f),
-                        end = Offset(2 * thirdWidth, size.height),
-                        strokeWidth = 2f
-                    )
-
-                    drawLine(
-                        color = onSurfaceVariant,
-                        start = Offset(0f, thirdHeight),
-                        end = Offset(size.width, thirdHeight),
-                        strokeWidth = 2f
-                    )
-                    drawLine(
-                        color = onSurfaceVariant,
-                        start = Offset(0f, 2 * thirdHeight),
-                        end = Offset(size.width, 2 * thirdHeight),
-                        strokeWidth = 2f
-                    )
-
-                    paths.fastForEach { pathData ->
-                        drawPath(
-                            path = pathData.path, color = Color.Black
+                        drawLine(
+                            color = onSurfaceVariant,
+                            start = Offset(thirdWidth, 0f),
+                            end = Offset(thirdWidth, size.height),
+                            strokeWidth = 2f
                         )
+                        drawLine(
+                            color = onSurfaceVariant,
+                            start = Offset(2 * thirdWidth, 0f),
+                            end = Offset(2 * thirdWidth, size.height),
+                            strokeWidth = 2f
+                        )
+
+                        drawLine(
+                            color = onSurfaceVariant,
+                            start = Offset(0f, thirdHeight),
+                            end = Offset(size.width, thirdHeight),
+                            strokeWidth = 2f
+                        )
+                        drawLine(
+                            color = onSurfaceVariant,
+                            start = Offset(0f, 2 * thirdHeight),
+                            end = Offset(size.width, 2 * thirdHeight),
+                            strokeWidth = 2f
+                        )
+
+                        paths.fastForEach { pathData ->
+                            drawPath(
+                                path = pathData.path, color = Color.Black
+                            )
+                        }
+                        currentPath?.let {
+                            drawPath(
+                                path = it.path, color = Color.Black
+                            )
+                        }
                     }
-                    currentPath?.let {
+                } else {
+                    Canvas(modifier = Modifier.fillMaxSize()) {
                         drawPath(
-                            path = it.path, color = Color.Black
+                            path = drawings[0].path.asComposePath(),
+                            color = Color.Black,
+                            style = Stroke(width = 2f)
                         )
                     }
                 }
