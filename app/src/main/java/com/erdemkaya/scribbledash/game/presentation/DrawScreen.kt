@@ -1,5 +1,6 @@
 package com.erdemkaya.scribbledash.game.presentation
 
+import android.graphics.RectF
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -20,7 +21,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,8 +49,10 @@ import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
 import com.erdemkaya.scribbledash.game.presentation.components.PathData
 import com.erdemkaya.scribbledash.game.presentation.components.PathModel
+import com.erdemkaya.scribbledash.game.presentation.components.normalizePathToCanvas
 import com.erdemkaya.scribbledash.ui.theme.Success
 import com.erdemkaya.scribbledash.ui.theme.onSurfaceVariant
+import kotlinx.coroutines.delay
 import kotlin.math.abs
 
 @Composable
@@ -61,16 +66,29 @@ fun DrawScreen(
     redoPaths: List<PathData>,
     onAction: (DrawingAction) -> Unit,
 
-) {
+    ) {
     val canUndo = undoPaths.isNotEmpty()
     val canRedo = redoPaths.isNotEmpty()
     val canClear = paths.isNotEmpty() || currentPath != null
 
     var stateTest by remember {
-        mutableStateOf(true)
+        mutableStateOf(false)
     }
 
-    stateTest = false
+    var countdown by remember {
+        mutableIntStateOf(3)
+    }
+
+    LaunchedEffect(key1 = stateTest) {
+        if (!stateTest) {
+            while (countdown > 0) {
+                delay(1000L)
+                countdown--
+            }
+            stateTest = true
+        }
+    }
+
 
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
@@ -100,139 +118,153 @@ fun DrawScreen(
                     )
                     .background(Color.White)
             ) {
-                if (stateTest) {
-                    Canvas(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
+                val randomDrawing = remember(drawings) {
+                    drawings.randomOrNull()
+                }
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(
+                            if (stateTest) Modifier.pointerInput(Unit) {
                                 detectDragGestures(
-                                    onDragStart = {
-                                        onAction(DrawingAction.OnNewPathStart)
-                                    },
-                                    onDragEnd = {
-                                        onAction(DrawingAction.OnPathEnd)
-                                    },
-                                    onDrag = { change, _ ->
-                                        onAction(DrawingAction.OnDraw(change.position))
-                                    },
-                                    onDragCancel = {
-                                        onAction(DrawingAction.OnPathEnd)
-                                    }
+                                    onDragStart = { onAction(DrawingAction.OnNewPathStart) },
+                                    onDragEnd = { onAction(DrawingAction.OnPathEnd) },
+                                    onDrag = { change, _ -> onAction(DrawingAction.OnDraw(change.position)) },
+                                    onDragCancel = { onAction(DrawingAction.OnPathEnd) }
                                 )
-                            }) {
-                        val thirdWidth = size.width / 3
-                        val thirdHeight = size.height / 3
+                            } else Modifier
+                        )
+                ) {
+                    val thirdWidth = size.width / 3
+                    val thirdHeight = size.height / 3
+                    drawLine(
+                        color = onSurfaceVariant,
+                        start = Offset(thirdWidth, 0f),
+                        end = Offset(thirdWidth, size.height),
+                        strokeWidth = 2f
+                    )
+                    drawLine(
+                        color = onSurfaceVariant,
+                        start = Offset(2 * thirdWidth, 0f),
+                        end = Offset(2 * thirdWidth, size.height),
+                        strokeWidth = 2f
+                    )
+                    drawLine(
+                        color = onSurfaceVariant,
+                        start = Offset(0f, thirdHeight),
+                        end = Offset(size.width, thirdHeight),
+                        strokeWidth = 2f
+                    )
+                    drawLine(
+                        color = onSurfaceVariant,
+                        start = Offset(0f, 2 * thirdHeight),
+                        end = Offset(size.width, 2 * thirdHeight),
+                        strokeWidth = 2f
+                    )
 
-                        drawLine(
-                            color = onSurfaceVariant,
-                            start = Offset(thirdWidth, 0f),
-                            end = Offset(thirdWidth, size.height),
-                            strokeWidth = 2f
-                        )
-                        drawLine(
-                            color = onSurfaceVariant,
-                            start = Offset(2 * thirdWidth, 0f),
-                            end = Offset(2 * thirdWidth, size.height),
-                            strokeWidth = 2f
-                        )
-
-                        drawLine(
-                            color = onSurfaceVariant,
-                            start = Offset(0f, thirdHeight),
-                            end = Offset(size.width, thirdHeight),
-                            strokeWidth = 2f
-                        )
-                        drawLine(
-                            color = onSurfaceVariant,
-                            start = Offset(0f, 2 * thirdHeight),
-                            end = Offset(size.width, 2 * thirdHeight),
-                            strokeWidth = 2f
-                        )
-
+                    if (stateTest) {
                         paths.fastForEach { pathData ->
                             drawPath(
-                                path = pathData.path, color = Color.Black
+                                path = pathData.path,
+                                color = Color.Black
                             )
                         }
                         currentPath?.let {
                             drawPath(
-                                path = it.path, color = Color.Black
+                                path = it.path,
+                                color = Color.Black
                             )
                         }
-                    }
-                } else {
-                    Canvas(modifier = Modifier.fillMaxSize()) {
-                        drawPath(
-                            path = drawings[0].path.asComposePath(),
-                            color = Color.Black,
-                            style = Stroke(width = 2f)
-                        )
+                    } else {
+                        randomDrawing?.let { drawing ->
+                            val normalizedPath = normalizePathToCanvas(
+                                drawing.path,
+                                drawing.bounds,
+                                size
+                            )
+                            drawPath(
+                                path = normalizedPath.asComposePath(),
+                                color = Color.Black,
+                                style = Stroke(width = 10f)
+                            )
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Button(
-                    onClick = { onAction(DrawingAction.OnUndoClick) },
-                    enabled = canUndo,
+            if (stateTest) {
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    )
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.reply),
-                        contentDescription = "Undo",
-                        tint = if (canUndo) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Button(
-                    onClick = { onAction(DrawingAction.OnRedoClick) },
-                    enabled = canRedo,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    )
-                ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.forward),
-                        contentDescription = "Redo",
-                        tint = if (canRedo) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Button(
-                    onClick = { onAction(DrawingAction.OnClearCanvasClick) },
-                    enabled = canClear,
-                    modifier = Modifier
-                        .weight(2f)
-                        .height(64.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Success,
-                        disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-                    )
-                ) {
-                    Text(
-                        "Clear Canvas".uppercase(),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = if (canClear) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(
-                            alpha = .8f
+                    Button(
+                        onClick = { onAction(DrawingAction.OnUndoClick) },
+                        enabled = canUndo,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(64.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
                         )
-                    )
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.reply),
+                            contentDescription = "Undo",
+                            tint = if (canUndo) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Button(
+                        onClick = { onAction(DrawingAction.OnRedoClick) },
+                        enabled = canRedo,
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(64.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
+                        )
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.forward),
+                            contentDescription = "Redo",
+                            tint = if (canRedo) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Button(
+                        onClick = { onAction(DrawingAction.OnClearCanvasClick) },
+                        enabled = canClear,
+                        modifier = Modifier
+                            .weight(2f)
+                            .height(64.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Success,
+                            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
+                        )
+                    ) {
+                        Text(
+                            "Clear Canvas".uppercase(),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = if (canClear) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(
+                                alpha = .8f
+                            )
+                        )
+                    }
                 }
+            } else {
+                Text(
+                    text = "$countdown seconds left",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier
+                        .padding(32.dp)
+                        .align(Alignment.CenterHorizontally)
+                )
             }
         }
     })
