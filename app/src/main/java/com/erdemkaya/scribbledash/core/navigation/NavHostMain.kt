@@ -1,25 +1,26 @@
 package com.erdemkaya.scribbledash.core.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.erdemkaya.scribbledash.game.presentation.mode_detail.DifficultyScreen
-import com.erdemkaya.scribbledash.game.presentation.mode_detail.DrawScreen
-import com.erdemkaya.scribbledash.game.presentation.mode_detail.DrawViewModel
-import com.erdemkaya.scribbledash.game.presentation.mode_list.HomeScreen
+import com.erdemkaya.scribbledash.game.presentation.DifficultyScreen
+import com.erdemkaya.scribbledash.game.presentation.DrawScreen
+import com.erdemkaya.scribbledash.game.presentation.DrawViewModel
+import com.erdemkaya.scribbledash.game.presentation.HomeScreen
+import org.koin.androidx.compose.koinViewModel
 
 
 @Composable
-fun NavHostMain() {
+fun NavHostMain(
+    drawViewModel: DrawViewModel = koinViewModel()
+) {
 
     val navController = rememberNavController()
-    val drawViewModel = viewModel<DrawViewModel>()
-    val drawState by drawViewModel.state.collectAsState()
+    val drawState by drawViewModel.state.collectAsStateWithLifecycle()
 
     NavHost(
         navController = navController, startDestination = "home"

@@ -57,6 +57,8 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+    implementation(libs.bundles.koin)
+
     implementation(libs.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
 }

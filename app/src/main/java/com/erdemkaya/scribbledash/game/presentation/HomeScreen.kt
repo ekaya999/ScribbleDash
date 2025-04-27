@@ -1,13 +1,10 @@
-package com.erdemkaya.scribbledash.game.presentation.mode_detail
+package com.erdemkaya.scribbledash.game.presentation
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
@@ -24,21 +21,20 @@ import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashNavBar
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
-import com.erdemkaya.scribbledash.game.presentation.mode_detail.components.DifficultyIcon
+import com.erdemkaya.scribbledash.game.presentation.components.ModeCard
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradEnd
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradStart
 
 @Composable
-fun DifficultyScreen(
+fun HomeScreen(
     modifier: Modifier = Modifier, navHostController: NavHostController
 ) {
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
-            title = "", modifier = modifier, showIcon = true, onClickBack = {
-                navHostController.navigate("home") {
-                    popUpTo("home") { inclusive = true }
-                }
-            })
+            title = "ScribbleDash",
+            modifier = modifier,
+            showIcon = false,
+        )
     }, bottomBar = {
         ScribbleDashNavBar(
             currentScreen = navHostController.currentDestination?.route!!,
@@ -70,28 +66,14 @@ fun DifficultyScreen(
                     style = MaterialTheme.typography.displayMedium,
                 )
                 Text(
-                    text = "Choose a difficulty setting", style = MaterialTheme.typography.bodyMedium
+                    text = "Select game mode", style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    DifficultyIcon(
-                        icon = ImageVector.vectorResource(R.drawable.beginner),
-                        description = "Beginner",
-                        modifier = Modifier.padding(top = 8.dp),
-                        onClick = { navHostController.navigate("draw")}
-                    )
-                    DifficultyIcon(
-                        icon = ImageVector.vectorResource(R.drawable.challenging),
-                        description = "Challenging",
-                        onClick = { navHostController.navigate("draw")}
-                    )
-                    DifficultyIcon(
-                        icon = ImageVector.vectorResource(R.drawable.master),
-                        description = "Master",
-                        modifier = Modifier.padding(top = 8.dp),
-                        onClick = { navHostController.navigate("draw")}
-                    )
-                }
+                ModeCard(
+                    title = "One Round Wonder",
+                    icon = ImageVector.vectorResource(R.drawable.one_round_wonder),
+                    onClick = { navHostController.navigate("difficulty") }
+                )
             }
         }
     })

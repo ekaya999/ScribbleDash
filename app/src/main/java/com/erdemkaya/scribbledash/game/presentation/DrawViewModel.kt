@@ -1,35 +1,21 @@
-package com.erdemkaya.scribbledash.game.presentation.mode_detail
+package com.erdemkaya.scribbledash.game.presentation
 
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.erdemkaya.scribbledash.game.presentation.components.PathData
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 
-data class DrawingState(
-    val currentPath: PathData? = null,
-    val paths: List<PathData> = emptyList(),
-    val undoPaths: List<PathData> = emptyList(),
-    val redoPaths: List<PathData> = emptyList()
-)
-
-data class PathData(
-    val id: String,
-    val path: List<Offset>
-)
-
-sealed interface DrawingAction {
-    data object OnNewPathStart : DrawingAction
-    data class OnDraw(val offset: Offset) : DrawingAction
-    data object OnPathEnd : DrawingAction
-    data object OnClearCanvasClick : DrawingAction
-    data object OnUndoClick : DrawingAction
-    data object OnRedoClick : DrawingAction
-}
 
 class DrawViewModel : ViewModel() {
     private val _state = MutableStateFlow(DrawingState())
-    val state = _state.asStateFlow()
+    val state = _state.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5000L), DrawingState()
+    )
 
     fun onAction(action: DrawingAction) {
         when (action) {
@@ -43,7 +29,7 @@ class DrawViewModel : ViewModel() {
     }
 
     private fun onPathEnd() {
-        val currentPathData = _state.value.currentPath ?: return
+        val currentPathData :PathData = _state.value.currentPath ?: return
         _state.update {
             it.copy(
                 currentPath = null,
