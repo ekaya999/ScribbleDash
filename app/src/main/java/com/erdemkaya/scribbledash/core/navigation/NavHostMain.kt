@@ -1,6 +1,7 @@
 package com.erdemkaya.scribbledash.core.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -24,8 +25,7 @@ fun NavHostMain(
     val drawState by drawViewModel.state.collectAsStateWithLifecycle()
     val drawingsState by drawViewModel.drawings.collectAsStateWithLifecycle()
 
-    val examplePath = drawViewModel.resultExamplePath.value
-    val userPath = drawViewModel.resultUserPath.value
+
 
     NavHost(
         navController = navController, startDestination = "home"
@@ -54,6 +54,9 @@ fun NavHostMain(
         }
         composable("result/{score}") {
             val score = it.arguments?.getString("score")?.toIntOrNull() ?: 0
+            val examplePath = drawViewModel.resultExamplePath.value
+            val userPath = drawViewModel.resultUserPath.value
+
             if (examplePath != null && userPath != null) {
                 DrawResultScreen(
                     modifier = Modifier,
@@ -62,6 +65,12 @@ fun NavHostMain(
                     examplePath = examplePath,
                     userPath = userPath
                 )
+            } else {
+                LaunchedEffect(Unit) {
+                    navController.navigate("home") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                }
             }
         }
     }

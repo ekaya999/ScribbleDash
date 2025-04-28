@@ -95,7 +95,6 @@ fun DrawScreen(
         }
     }
 
-
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
             title = "", modifier = modifier, showIcon = true, onClickBack = {
@@ -126,6 +125,12 @@ fun DrawScreen(
             ) {
                 val randomDrawing = remember(drawings) {
                     drawings.randomOrNull()
+                }
+
+                LaunchedEffect(randomDrawing) {
+                    randomDrawing?.let {
+                        drawViewModel.setCurrentExamplePath(it.path)
+                    }
                 }
                 Canvas(
                     modifier = Modifier
@@ -253,7 +258,8 @@ fun DrawScreen(
                             val userBounds = RectF()
                             userPath.computeBounds(userBounds, true)
 
-                            val examplePath = drawings.randomOrNull()?.path ?: return@Button
+                            val examplePath =
+                                drawViewModel.currentExamplePath.value ?: return@Button
                             val exampleBounds = RectF()
                             examplePath.computeBounds(exampleBounds, true)
 

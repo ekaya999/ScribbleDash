@@ -34,6 +34,9 @@ class DrawViewModel(
     private val _resultUserPath = mutableStateOf<Path?>(null)
     val resultUserPath: State<Path?> = _resultUserPath
 
+    private val _currentExamplePath = mutableStateOf<Path?>(null)
+    val currentExamplePath: State<Path?> = _currentExamplePath
+
     init {
         loadDrawings()
     }
@@ -47,6 +50,10 @@ class DrawViewModel(
     fun setResultPaths(example: Path, user: Path) {
         _resultExamplePath.value = example
         _resultUserPath.value = user
+    }
+
+    fun setCurrentExamplePath(path: Path) {
+        _currentExamplePath.value = path
     }
 
     fun onAction(action: DrawingAction) {
