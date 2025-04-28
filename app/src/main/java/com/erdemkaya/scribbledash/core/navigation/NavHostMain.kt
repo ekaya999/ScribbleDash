@@ -1,7 +1,6 @@
 package com.erdemkaya.scribbledash.core.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -25,8 +24,6 @@ fun NavHostMain(
     val drawState by drawViewModel.state.collectAsStateWithLifecycle()
     val drawingsState by drawViewModel.drawings.collectAsStateWithLifecycle()
 
-
-
     NavHost(
         navController = navController, startDestination = "home"
     ) {
@@ -38,8 +35,9 @@ fun NavHostMain(
         }
         composable("difficulty") {
             DifficultyScreen(
-                modifier = Modifier,
-                navHostController = navController)
+                modifier = Modifier, navHostController = navController,
+                onAction = drawViewModel::onAction
+            )
         }
         composable("draw") {
             DrawScreen(
@@ -50,28 +48,17 @@ fun NavHostMain(
                 currentPath = drawState.currentPath,
                 undoPaths = drawState.undoPaths,
                 redoPaths = drawState.redoPaths,
-                onAction = drawViewModel::onAction)
+                difficulty = drawState.difficulty,
+                onAction = drawViewModel::onAction
+            )
         }
-        composable("result/{score}") {
-            val score = it.arguments?.getString("score")?.toIntOrNull() ?: 0
-            val examplePath = drawViewModel.resultExamplePath.value
-            val userPath = drawViewModel.resultUserPath.value
-
-            if (examplePath != null && userPath != null) {
-                DrawResultScreen(
-                    modifier = Modifier,
-                    navHostController = navController,
-                    result = score,
-                    examplePath = examplePath,
-                    userPath = userPath
-                )
-            } else {
-                LaunchedEffect(Unit) {
-                    navController.navigate("home") {
-                        popUpTo("home") { inclusive = true }
-                    }
-                }
-            }
+        composable("result") {
+            DrawResultScreen(
+                modifier = Modifier,
+                navHostController = navController,
+                state = drawState,
+                onAction = drawViewModel::onAction
+            )
         }
     }
 }

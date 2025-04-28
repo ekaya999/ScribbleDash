@@ -1,6 +1,5 @@
 package com.erdemkaya.scribbledash.game.presentation.components
 
-import android.graphics.Path
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,8 +10,8 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ResultComparisonSection(
-    examplePath: Path,
-    userPath: Path
+    examplePath: PathModel,
+    userPath: PathModel
 ) {
     Row(
         modifier = Modifier
@@ -20,7 +19,7 @@ fun ResultComparisonSection(
             .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        ResultCanvasCard(title = "Example", path = examplePath)
-        ResultCanvasCard(title = "Drawing", path = userPath)
+        ResultCanvasCard(title = "Example", pathModel = examplePath, rotation = -10f, 0.dp)
+        ResultCanvasCard(title = "Drawing", pathModel = userPath, rotation = 10f, 16.dp)
     }
 }

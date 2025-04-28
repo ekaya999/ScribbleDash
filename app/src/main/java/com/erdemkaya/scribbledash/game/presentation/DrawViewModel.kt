@@ -1,11 +1,9 @@
 package com.erdemkaya.scribbledash.game.presentation
 
-import android.graphics.Path
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
 import com.erdemkaya.scribbledash.game.presentation.components.DrawingLoader
 import com.erdemkaya.scribbledash.game.presentation.components.PathData
 import com.erdemkaya.scribbledash.game.presentation.components.PathModel
@@ -28,15 +26,6 @@ class DrawViewModel(
     private val _drawings = MutableStateFlow<List<PathModel>>(emptyList())
     val drawings: StateFlow<List<PathModel>> = _drawings
 
-    private val _resultExamplePath = mutableStateOf<Path?>(null)
-    val resultExamplePath: State<Path?> = _resultExamplePath
-
-    private val _resultUserPath = mutableStateOf<Path?>(null)
-    val resultUserPath: State<Path?> = _resultUserPath
-
-    private val _currentExamplePath = mutableStateOf<Path?>(null)
-    val currentExamplePath: State<Path?> = _currentExamplePath
-
     init {
         loadDrawings()
     }
@@ -47,15 +36,6 @@ class DrawViewModel(
         }
     }
 
-    fun setResultPaths(example: Path, user: Path) {
-        _resultExamplePath.value = example
-        _resultUserPath.value = user
-    }
-
-    fun setCurrentExamplePath(path: Path) {
-        _currentExamplePath.value = path
-    }
-
     fun onAction(action: DrawingAction) {
         when (action) {
             DrawingAction.OnClearCanvasClick -> onClearCanvasClick()
@@ -64,6 +44,9 @@ class DrawViewModel(
             DrawingAction.OnPathEnd -> onPathEnd()
             DrawingAction.OnUndoClick -> onUndo()
             DrawingAction.OnRedoClick -> onRedo()
+            is DrawingAction.OnExampleSet -> setCurrentExamplePath(action.exampleSet)
+            is DrawingAction.OnDoneClick -> onDone(action.example, action.user, action.score)
+            is DrawingAction.OnDifficultySet -> setDifficulty(action.difficulty)
         }
     }
 
@@ -74,8 +57,7 @@ class DrawViewModel(
                 currentPath = null,
                 paths = it.paths + currentPathData,
                 undoPaths = (it.undoPaths + currentPathData).takeLast(5),
-                redoPaths = emptyList()
-
+                redoPaths = emptyList(),
             )
         }
     }
@@ -107,7 +89,9 @@ class DrawViewModel(
                 currentPath = null,
                 paths = emptyList(),
                 undoPaths = emptyList(),
-                redoPaths = emptyList()
+                redoPaths = emptyList(),
+                resultExample = null,
+                resultUser = null
             )
         }
     }
@@ -139,6 +123,33 @@ class DrawViewModel(
                     redoPaths = redoPaths.dropLast(1)
                 )
             }
+        }
+    }
+
+    private fun setCurrentExamplePath(exampleSet: PathModel) {
+        _state.update {
+            it.copy(
+                examplePath = exampleSet
+            )
+        }
+    }
+
+    private fun onDone(example: PathModel, user: PathModel, score: Int) {
+        _state.update {
+            it.copy(
+                resultExample = example,
+                resultUser = user,
+                score = score
+            )
+        }
+    }
+
+
+    private fun setDifficulty(difficulty: Difficulty) {
+        _state.update {
+            it.copy(
+                difficulty = difficulty
+            )
         }
     }
 

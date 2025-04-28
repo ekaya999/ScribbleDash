@@ -1,19 +1,23 @@
 package com.erdemkaya.scribbledash.game.presentation
 
 import android.graphics.RectF
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -46,17 +50,14 @@ import androidx.navigation.NavHostController
 import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
+import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
 import com.erdemkaya.scribbledash.game.presentation.components.PathData
 import com.erdemkaya.scribbledash.game.presentation.components.PathModel
-import com.erdemkaya.scribbledash.game.presentation.components.calculatePathLength
-import com.erdemkaya.scribbledash.game.presentation.components.calculateScore
-import com.erdemkaya.scribbledash.game.presentation.components.createBitmapFromPath
-import com.erdemkaya.scribbledash.game.presentation.components.normalizePathForComparison
+import com.erdemkaya.scribbledash.game.presentation.components.comparePaths
 import com.erdemkaya.scribbledash.game.presentation.components.normalizePathToCanvas
 import com.erdemkaya.scribbledash.ui.theme.Success
 import com.erdemkaya.scribbledash.ui.theme.onSurfaceVariant
 import kotlinx.coroutines.delay
-import org.koin.androidx.compose.koinViewModel
 import kotlin.math.abs
 import android.graphics.Path as AndroidPath
 import androidx.compose.ui.graphics.Path as ComposePath
@@ -70,12 +71,12 @@ fun DrawScreen(
     currentPath: PathData?,
     undoPaths: List<PathData>,
     redoPaths: List<PathData>,
+    difficulty: Difficulty,
     onAction: (DrawingAction) -> Unit,
-    drawViewModel: DrawViewModel = koinViewModel()
-    ) {
+) {
     val canUndo = undoPaths.isNotEmpty()
     val canRedo = redoPaths.isNotEmpty()
-    val canClear = paths.isNotEmpty() || currentPath != null
+    val canSubmit = paths.isNotEmpty() || currentPath != null
 
     var drawMode by remember {
         mutableStateOf(false)
@@ -92,6 +93,16 @@ fun DrawScreen(
                 countdown--
             }
             drawMode = true
+        }
+    }
+
+    val randomDrawing = remember(drawings) {
+        drawings.randomOrNull()
+    }
+
+    LaunchedEffect(randomDrawing) {
+        randomDrawing?.let {
+            onAction(DrawingAction.OnExampleSet(randomDrawing))
         }
     }
 
@@ -123,29 +134,16 @@ fun DrawScreen(
                     )
                     .background(Color.White)
             ) {
-                val randomDrawing = remember(drawings) {
-                    drawings.randomOrNull()
-                }
-
-                LaunchedEffect(randomDrawing) {
-                    randomDrawing?.let {
-                        drawViewModel.setCurrentExamplePath(it.path)
-                    }
-                }
                 Canvas(
                     modifier = Modifier
                         .fillMaxSize()
-                        .then(
-                            if (drawMode) Modifier.pointerInput(Unit) {
-                                detectDragGestures(
-                                    onDragStart = { onAction(DrawingAction.OnNewPathStart) },
-                                    onDragEnd = { onAction(DrawingAction.OnPathEnd) },
-                                    onDrag = { change, _ -> onAction(DrawingAction.OnDraw(change.position)) },
-                                    onDragCancel = { onAction(DrawingAction.OnPathEnd) }
-                                )
-                            } else Modifier
-                        )
-                ) {
+                        .then(if (drawMode) Modifier.pointerInput(Unit) {
+                            detectDragGestures(
+                                onDragStart = { onAction(DrawingAction.OnNewPathStart) },
+                                onDragEnd = { onAction(DrawingAction.OnPathEnd) },
+                                onDrag = { change, _ -> onAction(DrawingAction.OnDraw(change.position)) },
+                                onDragCancel = { onAction(DrawingAction.OnPathEnd) })
+                        } else Modifier)) {
                     val thirdWidth = size.width / 3
                     val thirdHeight = size.height / 3
                     drawLine(
@@ -176,22 +174,18 @@ fun DrawScreen(
                     if (drawMode) {
                         paths.fastForEach { pathData ->
                             drawPath(
-                                path = pathData.path,
-                                color = Color.Black
+                                path = pathData.path, color = Color.Black
                             )
                         }
                         currentPath?.let {
                             drawPath(
-                                path = it.path,
-                                color = Color.Black
+                                path = it.path, color = Color.Black
                             )
                         }
                     } else {
                         randomDrawing?.let { drawing ->
                             val normalizedPath = normalizePathToCanvas(
-                                drawing.path,
-                                drawing.bounds,
-                                size
+                                drawing.path, drawing.bounds, size
                             )
                             drawPath(
                                 path = normalizedPath.asComposePath(),
@@ -209,20 +203,22 @@ fun DrawScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .height(IntrinsicSize.Min)
                         .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Button(
                         onClick = { onAction(DrawingAction.OnUndoClick) },
                         enabled = canUndo,
                         modifier = Modifier
-                            .weight(1f)
-                            .height(64.dp),
+                            .size(64.dp)
+                            .aspectRatio(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        )
+                        ),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.reply),
@@ -234,12 +230,13 @@ fun DrawScreen(
                         onClick = { onAction(DrawingAction.OnRedoClick) },
                         enabled = canRedo,
                         modifier = Modifier
-                            .weight(1f)
-                            .height(64.dp),
+                            .size(64.dp)
+                            .aspectRatio(1f),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                        )
+                        ),
+                        shape = RoundedCornerShape(16.dp)
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.forward),
@@ -247,6 +244,7 @@ fun DrawScreen(
                             tint = if (canRedo) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onSurface
                         )
                     }
+                    Spacer(modifier = Modifier.weight(1f))
                     Button(
                         onClick = {
                             val userPath = AndroidPath().apply {
@@ -258,64 +256,44 @@ fun DrawScreen(
                             val userBounds = RectF()
                             userPath.computeBounds(userBounds, true)
 
-                            val examplePath =
-                                drawViewModel.currentExamplePath.value ?: return@Button
+                            val examplePath = randomDrawing?.path ?: return@Button
                             val exampleBounds = RectF()
                             examplePath.computeBounds(exampleBounds, true)
 
-                            val targetSize = 1024f
-
-                            val normalizedUserPath = normalizePathForComparison(
-                                userPath, userBounds,
-                                userStrokeWidth = 3f,
-                                exampleStrokeWidth = 3f * 15f,
-                                isUser = true,
-                                targetSize = targetSize
-                            )
-
-                            val normalizedExamplePath = normalizePathForComparison(
-                                examplePath, exampleBounds,
-                                userStrokeWidth = 3f,
-                                exampleStrokeWidth = 3f * 15f,
-                                isUser = false,
-                                targetSize = targetSize
-                            )
-                            val userBitmap = createBitmapFromPath(normalizedUserPath, 3f, 1024)
-                            val exampleBitmap =
-                                createBitmapFromPath(normalizedExamplePath, 3f * 15f, 1024)
-                            val coveragePercentage =
-                                calculateScore(userBitmap, exampleBitmap) * 100f
-                            val userPathLength = calculatePathLength(userPath)
-                            val examplePathLength = calculatePathLength(examplePath)
-
-                            val lengthRatio = userPathLength / examplePathLength
-                            val missingLengthPenalty = if (lengthRatio < 0.7f) {
-                                100f - (lengthRatio * 100f)
-                            } else {
-                                0f
+                            val difficultyMultiplier = when (difficulty) {
+                                Difficulty.Beginner -> 15f
+                                Difficulty.Challenging -> 7f
+                                Difficulty.Master -> 4f
                             }
-                            var finalScore = coveragePercentage - missingLengthPenalty
-                            finalScore = finalScore.coerceIn(0f, 100f)
 
-                            drawViewModel.setResultPaths(
-                                example = normalizedExamplePath,
-                                user = normalizedUserPath
+                            val finalScore = comparePaths(
+                                userPath = userPath,
+                                examplePath = examplePath,
+                                exampleStrokeMultiplier = difficultyMultiplier
                             )
-                            navHostController.navigate("result/${finalScore.toInt()}")
+                            onAction(
+                                DrawingAction.OnDoneClick(
+                                    example = PathModel(examplePath, exampleBounds),
+                                    user = PathModel(userPath, userBounds),
+                                    score = finalScore.toInt()
+                                )
+                            )
+
+                            navHostController.navigate("result")
                         },
-                        enabled = canClear,
-                        modifier = Modifier
-                            .weight(2f)
-                            .height(64.dp),
+                        enabled = canSubmit,
+                        modifier = Modifier.fillMaxHeight(),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Success,
                             disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-                        )
+                        ),
+                        shape = RoundedCornerShape(16.dp),
+                        border = BorderStroke(5.dp, Color.White)
                     ) {
                         Text(
                             "Done".uppercase(),
                             style = MaterialTheme.typography.headlineSmall,
-                            color = if (canClear) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(
+                            color = if (canSubmit) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimary.copy(
                                 alpha = .8f
                             )
                         )

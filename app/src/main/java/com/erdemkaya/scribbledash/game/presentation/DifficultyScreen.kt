@@ -1,5 +1,6 @@
 package com.erdemkaya.scribbledash.game.presentation
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,17 +22,24 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.erdemkaya.scribbledash.R
-import com.erdemkaya.scribbledash.core.presentation.ScribbleDashNavBar
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
+import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
 import com.erdemkaya.scribbledash.game.presentation.components.DifficultyIcon
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradEnd
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradStart
 
 @Composable
 fun DifficultyScreen(
-    modifier: Modifier = Modifier, navHostController: NavHostController
+    modifier: Modifier = Modifier, navHostController: NavHostController,
+    onAction: (DrawingAction) -> Unit,
 ) {
+    BackHandler {
+        navHostController.navigate("home") {
+            popUpTo("home") { inclusive = true }
+        }
+    }
+
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
             title = "", modifier = modifier, showIcon = true, onClickBack = {
@@ -39,12 +47,6 @@ fun DifficultyScreen(
                     popUpTo("home") { inclusive = true }
                 }
             })
-    }, bottomBar = {
-        ScribbleDashNavBar(
-            currentScreen = navHostController.currentDestination?.route!!,
-            navHostController = navHostController,
-            modifier = modifier
-        )
     }, content = { paddingValues ->
         Box(
             modifier = Modifier
@@ -70,27 +72,39 @@ fun DifficultyScreen(
                     style = MaterialTheme.typography.displayMedium,
                 )
                 Text(
-                    text = "Choose a difficulty setting", style = MaterialTheme.typography.bodyMedium
+                    text = "Choose a difficulty setting",
+                    style = MaterialTheme.typography.bodyMedium
                 )
                 Spacer(Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
                     DifficultyIcon(
                         icon = ImageVector.vectorResource(R.drawable.beginner),
-                        description = "Beginner",
+                        description = Difficulty.Beginner.toString(),
                         modifier = Modifier.padding(top = 8.dp),
-                        onClick = { navHostController.navigate("draw")}
-                    )
+                        onClick = {
+                            onAction(DrawingAction.OnDifficultySet(Difficulty.Beginner))
+                            navHostController.navigate("draw")
+                        })
                     DifficultyIcon(
                         icon = ImageVector.vectorResource(R.drawable.challenging),
-                        description = "Challenging",
-                        onClick = { navHostController.navigate("draw")}
-                    )
+                        description = Difficulty.Challenging.toString(),
+                        onClick = {
+                            onAction(DrawingAction.OnDifficultySet(Difficulty.Challenging))
+                            navHostController.navigate("draw")
+                        })
                     DifficultyIcon(
                         icon = ImageVector.vectorResource(R.drawable.master),
-                        description = "Master",
+                        description = Difficulty.Master.toString(),
                         modifier = Modifier.padding(top = 8.dp),
-                        onClick = { navHostController.navigate("draw")}
-                    )
+                        onClick = {
+                            onAction(DrawingAction.OnDifficultySet(Difficulty.Master))
+                            navHostController.navigate("draw")
+                        })
                 }
             }
         }

@@ -1,6 +1,8 @@
 package com.erdemkaya.scribbledash.game.presentation
 
 import androidx.compose.ui.geometry.Offset
+import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
+import com.erdemkaya.scribbledash.game.presentation.components.PathModel
 
 sealed interface DrawingAction {
     data object OnNewPathStart : DrawingAction
@@ -9,4 +11,9 @@ sealed interface DrawingAction {
     data object OnClearCanvasClick : DrawingAction
     data object OnUndoClick : DrawingAction
     data object OnRedoClick : DrawingAction
+    data class OnExampleSet(val exampleSet: PathModel) : DrawingAction
+    data class OnDoneClick(val example: PathModel, val user: PathModel, val score: Int) :
+        DrawingAction
+
+    data class OnDifficultySet(val difficulty: Difficulty) : DrawingAction
 }
