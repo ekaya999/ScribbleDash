@@ -12,6 +12,7 @@ import com.erdemkaya.scribbledash.game.presentation.DrawResultScreen
 import com.erdemkaya.scribbledash.game.presentation.DrawScreen
 import com.erdemkaya.scribbledash.game.presentation.DrawViewModel
 import com.erdemkaya.scribbledash.game.presentation.HomeScreen
+import com.erdemkaya.scribbledash.game.presentation.StatisticsScreen
 import org.koin.androidx.compose.koinViewModel
 
 
@@ -58,6 +59,12 @@ fun NavHostMain(
                 navHostController = navController,
                 state = drawState,
                 onAction = drawViewModel::onAction
+            )
+        }
+        composable("statistics") {
+            StatisticsScreen(
+                modifier = Modifier,
+                navHostController = navController,
             )
         }
     }

@@ -7,5 +7,5 @@ sealed class ScribbleDashNavBarItem(
     var screenRoute: String
 ) {
     object Home: ScribbleDashNavBarItem(R.drawable.home, "home")
-    object Statistics: ScribbleDashNavBarItem(R.drawable.chart, "stat")
+    object Statistics : ScribbleDashNavBarItem(R.drawable.chart, "statistics")
 }

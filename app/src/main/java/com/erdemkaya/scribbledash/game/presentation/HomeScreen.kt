@@ -34,6 +34,7 @@ fun HomeScreen(
             title = "ScribbleDash",
             modifier = modifier,
             showIcon = false,
+            homeScreen = true
         )
     }, bottomBar = {
         ScribbleDashNavBar(

@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
 import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.ui.theme.ScribbleDashTheme
 
@@ -26,7 +27,8 @@ fun ScribbleDashTopBar(
     modifier: Modifier = Modifier,
     title: String,
     showIcon: Boolean = false,
-    onClickBack: () -> Unit = {}
+    onClickBack: () -> Unit = {},
+    homeScreen: Boolean = false
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     TopAppBar(
@@ -43,7 +45,10 @@ fun ScribbleDashTopBar(
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = if (homeScreen) MaterialTheme.typography.headlineMedium else MaterialTheme.typography.labelLarge.copy(
+                        fontSize = 24.sp,
+                        lineHeight = 28.sp
+                    ),
                     color = MaterialTheme.colorScheme.onBackground
                 )
             }
