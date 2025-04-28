@@ -21,7 +21,6 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.erdemkaya.scribbledash.R
-import com.erdemkaya.scribbledash.core.presentation.ScribbleDashNavBar
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
 import com.erdemkaya.scribbledash.game.presentation.mode_detail.components.DifficultyIcon
@@ -39,12 +38,6 @@ fun DifficultyScreen(
                     popUpTo("home") { inclusive = true }
                 }
             })
-    }, bottomBar = {
-        ScribbleDashNavBar(
-            currentScreen = navHostController.currentDestination?.route!!,
-            navHostController = navHostController,
-            modifier = modifier
-        )
     }, content = { paddingValues ->
         Box(
             modifier = Modifier

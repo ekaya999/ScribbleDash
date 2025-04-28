@@ -1,38 +1,35 @@
 package com.erdemkaya.scribbledash.game.presentation.mode_detail
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -88,7 +85,8 @@ fun DrawScreen(
                 modifier = Modifier
                     .aspectRatio(1f)
                     .shadow(
-                        elevation = 4.dp, shape = RoundedCornerShape(10.dp)
+                        elevation = 4.dp, shape = RoundedCornerShape(24.dp),
+                        spotColor = Color.Yellow.copy(.5f)
                     )
                     .background(Color.White)
             ) {
@@ -158,20 +156,22 @@ fun DrawScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    .height(IntrinsicSize.Min)
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Button(
                     onClick = { onAction(DrawingAction.OnUndoClick) },
                     enabled = canUndo,
                     modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
+                        .size(64.dp)
+                        .aspectRatio(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    )
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Icon(
                         imageVector = ImageVector.vectorResource(R.drawable.reply),
@@ -183,12 +183,13 @@ fun DrawScreen(
                     onClick = { onAction(DrawingAction.OnRedoClick) },
                     enabled = canRedo,
                     modifier = Modifier
-                        .weight(1f)
-                        .height(64.dp),
+                        .size(64.dp)
+                        .aspectRatio(1f),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow
-                    )
+                    ),
+                    shape = RoundedCornerShape(16.dp)
                 ) {
                     Icon(
                         imageVector = ImageVector.vectorResource(R.drawable.forward),
@@ -200,12 +201,14 @@ fun DrawScreen(
                     onClick = { onAction(DrawingAction.OnClearCanvasClick) },
                     enabled = canClear,
                     modifier = Modifier
-                        .weight(2f)
-                        .height(64.dp),
+                        .weight(1f)
+                        .fillMaxHeight(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Success,
                         disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-                    )
+                    ),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(5.dp, Color.White)
                 ) {
                     Text(
                         "Clear Canvas".uppercase(),
