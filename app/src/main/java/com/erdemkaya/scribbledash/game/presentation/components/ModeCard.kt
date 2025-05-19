@@ -32,13 +32,17 @@ fun ModeCard(
     title: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
+    borderColor: Color,
     onClick: () -> Unit = {},
     contentColor: Color = MaterialTheme.colorScheme.onBackground,
 ) {
     Card(
-        modifier = modifier.height(100.dp).fillMaxWidth().clickable { onClick() },
-        shape = RoundedCornerShape(15),
-        border = BorderStroke(7.dp, BorderGreen),
+        modifier = modifier
+            .height(100.dp)
+            .fillMaxWidth()
+            .clickable { onClick() },
+        shape = RoundedCornerShape(25),
+        border = BorderStroke(7.dp, borderColor),
         colors = CardDefaults.cardColors(
             containerColor = Color.White, contentColor = contentColor
         )
@@ -46,12 +50,16 @@ fun ModeCard(
         Row(
             modifier = modifier.fillMaxSize()
         ) {
-            Row(modifier = modifier.fillMaxWidth(.6f).fillMaxHeight(),
+            Row(modifier = modifier
+                .fillMaxWidth(.6f)
+                .fillMaxHeight(),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Start) {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.headlineMedium,
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp),
                     maxLines = 2,
                 )
             }
@@ -60,7 +68,9 @@ fun ModeCard(
                 Icon(
                     imageVector = icon,
                     contentDescription = title,
-                    modifier = Modifier.fillMaxSize().padding(bottom = 2.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 2.dp),
                     tint = Color.Unspecified
                 )
             }
@@ -74,6 +84,7 @@ private fun ModeCardPreview() {
     ScribbleDashTheme {
         ModeCard(
             title = "One Round Wonder",
+            borderColor = BorderGreen,
             icon = ImageVector.vectorResource(id = R.drawable.one_round_wonder),
         )
     }

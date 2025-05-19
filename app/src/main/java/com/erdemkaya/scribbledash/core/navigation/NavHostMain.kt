@@ -11,6 +11,7 @@ import com.erdemkaya.scribbledash.game.presentation.DifficultyScreen
 import com.erdemkaya.scribbledash.game.presentation.DrawResultScreen
 import com.erdemkaya.scribbledash.game.presentation.DrawScreen
 import com.erdemkaya.scribbledash.game.presentation.DrawViewModel
+import com.erdemkaya.scribbledash.game.presentation.FinalResultScreen
 import com.erdemkaya.scribbledash.game.presentation.HomeScreen
 import com.erdemkaya.scribbledash.game.presentation.StatisticsScreen
 import org.koin.androidx.compose.koinViewModel
@@ -32,6 +33,7 @@ fun NavHostMain(
             HomeScreen(
                 modifier = Modifier,
                 navHostController = navController,
+                onAction = drawViewModel::onAction
             )
         }
         composable("difficulty") {
@@ -50,7 +52,10 @@ fun NavHostMain(
                 undoPaths = drawState.undoPaths,
                 redoPaths = drawState.redoPaths,
                 difficulty = drawState.difficulty,
-                onAction = drawViewModel::onAction
+                gameMode = drawState.mode,
+                successfulDrawCount = drawState.successfulDrawings,
+                onAction = drawViewModel::onAction,
+                speedDrawCount = drawState.speedDrawCount
             )
         }
         composable("result") {
@@ -65,6 +70,15 @@ fun NavHostMain(
             StatisticsScreen(
                 modifier = Modifier,
                 navHostController = navController,
+                state = drawState
+            )
+        }
+        composable("final") {
+            FinalResultScreen(
+                modifier = Modifier,
+                navHostController = navController,
+                state = drawState,
+                onAction = drawViewModel::onAction
             )
         }
     }

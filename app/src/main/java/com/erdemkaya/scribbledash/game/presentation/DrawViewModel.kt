@@ -5,34 +5,50 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
 import com.erdemkaya.scribbledash.game.presentation.components.DrawingLoader
+import com.erdemkaya.scribbledash.game.presentation.components.GameMode
+import com.erdemkaya.scribbledash.game.presentation.components.HighScoreDataStore
 import com.erdemkaya.scribbledash.game.presentation.components.PathData
 import com.erdemkaya.scribbledash.game.presentation.components.PathModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
 class DrawViewModel(
-    private val drawingLoader: DrawingLoader
+    private val drawingLoader: DrawingLoader, private val dataStore: HighScoreDataStore
 ) : ViewModel() {
     private val _state = MutableStateFlow(DrawingState())
-    val state = _state.stateIn(
+    val state = _state.onStart {
+        loadDrawings()
+        loadHighScores()
+    }.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000L), DrawingState()
     )
 
     private val _drawings = MutableStateFlow<List<PathModel>>(emptyList())
     val drawings: StateFlow<List<PathModel>> = _drawings
 
-    init {
-        loadDrawings()
-    }
-
     private fun loadDrawings() {
         viewModelScope.launch {
             _drawings.value = drawingLoader.loadAllDrawings()
+        }
+    }
+
+    private fun loadHighScores() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    speedDrawAvgHighScore = dataStore.speedDrawAvg.first(),
+                    speedDrawSuccessfulDrawHighScore = dataStore.speedDrawCount.first(),
+                    endlessDrawAvgHighScore = dataStore.endlessDrawAvg.first(),
+                    endlessDrawSuccessfulDrawHighScore = dataStore.endlessDrawCount.first()
+                )
+            }
         }
     }
 
@@ -45,13 +61,34 @@ class DrawViewModel(
             DrawingAction.OnUndoClick -> onUndo()
             DrawingAction.OnRedoClick -> onRedo()
             is DrawingAction.OnExampleSet -> setCurrentExamplePath(action.exampleSet)
-            is DrawingAction.OnDoneClick -> onDone(action.example, action.user, action.score)
+            is DrawingAction.OnDoneClick -> onDone(
+                action.example,
+                action.user,
+                action.score,
+                action.successfulDrawCount,
+                action.speedDrawCount
+            )
+
             is DrawingAction.OnDifficultySet -> setDifficulty(action.difficulty)
+            is DrawingAction.OnGameModeSet -> setGameMode(action.mode)
+            is DrawingAction.UpdateHighScore -> updateHighScore(action.newScore, action.key)
+            DrawingAction.OnClearDataStore -> clearDataStore()
+            DrawingAction.OnClearStatisticsClick -> onClearStatisticsClick()
+        }
+    }
+
+    private fun onClearStatisticsClick() {
+        _state.update {
+            it.copy(
+                speedDrawAvg = 0,
+                speedDrawCount = 0,
+                successfulDrawings = 0
+            )
         }
     }
 
     private fun onPathEnd() {
-        val currentPathData :PathData = _state.value.currentPath ?: return
+        val currentPathData: PathData = _state.value.currentPath ?: return
         _state.update {
             it.copy(
                 currentPath = null,
@@ -91,7 +128,7 @@ class DrawViewModel(
                 undoPaths = emptyList(),
                 redoPaths = emptyList(),
                 resultExample = null,
-                resultUser = null
+                resultUser = null,
             )
         }
     }
@@ -134,12 +171,21 @@ class DrawViewModel(
         }
     }
 
-    private fun onDone(example: PathModel, user: PathModel, score: Int) {
+    private fun onDone(
+        example: PathModel,
+        user: PathModel,
+        score: Int,
+        drawCount: Int,
+        speedDrawCount: Int
+    ) {
         _state.update {
             it.copy(
                 resultExample = example,
                 resultUser = user,
-                score = score
+                score = score,
+                successfulDrawings = drawCount,
+                speedDrawCount = speedDrawCount,
+                speedDrawAvg = it.speedDrawAvg + score
             )
         }
     }
@@ -149,6 +195,77 @@ class DrawViewModel(
         _state.update {
             it.copy(
                 difficulty = difficulty
+            )
+        }
+    }
+
+
+    private fun setGameMode(mode: GameMode) {
+        _state.update {
+            it.copy(
+                mode = mode
+            )
+        }
+    }
+
+    private fun updateHighScore(newScore: Int, key: String) {
+        when (key) {
+            "speedAvg" -> {
+                viewModelScope.launch {
+                    dataStore.saveSpeedDrawAvgHighScore(newScore)
+                }
+                _state.update {
+                    it.copy(
+                        speedDrawAvgHighScore = newScore
+                    )
+                }
+            }
+
+            "speedCount" -> {
+                viewModelScope.launch {
+                    dataStore.saveSpeedDrawCountHighScore(newScore)
+                }
+                _state.update {
+                    it.copy(
+                        speedDrawSuccessfulDrawHighScore = newScore
+                    )
+                }
+            }
+
+            "endlessAvg" -> {
+                viewModelScope.launch {
+                    dataStore.saveEndlessDrawAvgHighScore(newScore)
+                }
+                _state.update {
+                    it.copy(
+                        endlessDrawAvgHighScore = newScore
+                    )
+                }
+            }
+
+            "endlessCount" -> {
+                viewModelScope.launch {
+                    dataStore.saveEndlessDrawCountHighScore(newScore)
+                }
+                _state.update {
+                    it.copy(
+                        endlessDrawSuccessfulDrawHighScore = newScore
+                    )
+                }
+            }
+        }
+    }
+
+    private fun clearDataStore() {
+        viewModelScope.launch {
+            dataStore.clearDataStore()
+        }
+        _state.update {
+            it.copy(
+                speedDrawAvgHighScore = 0,
+                speedDrawSuccessfulDrawHighScore = 0,
+                endlessDrawAvgHighScore = 0,
+                endlessDrawSuccessfulDrawHighScore = 0
             )
         }
     }

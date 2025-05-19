@@ -3,40 +3,35 @@ package com.erdemkaya.scribbledash.game.presentation.components
 import android.graphics.Matrix
 import android.graphics.Path
 import android.graphics.RectF
+import kotlin.math.min
 
 fun normalizePathForComparison(
-    originalPath: Path,
-    originalBounds: RectF,
-    userStrokeWidth: Float,
-    exampleStrokeWidth: Float,
+    path: Path,
+    bounds: RectF,
+    strokeWidth: Float,
+    strokeScale: Float,
     isUser: Boolean,
-    targetSize: Float
+    targetSize: Float,
+    paddingFactor: Float = 0.1f
 ): Path {
-    val path = Path(originalPath)
+    val normalizedPath = Path(path)
 
-    val bounds = RectF(originalBounds)
+    val scaleX = (targetSize * (1 - 2 * paddingFactor)) / bounds.width()
+    val scaleY = (targetSize * (1 - 2 * paddingFactor)) / bounds.height()
+    val scale = min(scaleX, scaleY)
 
-    val insetAmount = userStrokeWidth / 2f
+    val dx = -bounds.left
+    val dy = -bounds.top
 
-    if (isUser) {
-        val userInsetAdjustment = (exampleStrokeWidth - userStrokeWidth) / 2f
-        bounds.inset(insetAmount + userInsetAdjustment, insetAmount + userInsetAdjustment)
-    } else {
-        bounds.inset(insetAmount, insetAmount)
+    val tx = (targetSize - bounds.width() * scale) / 2f
+    val ty = (targetSize - bounds.height() * scale) / 2f
+
+    val matrix = Matrix().apply {
+        postTranslate(dx, dy)
+        postScale(scale, scale)
+        postTranslate(tx, ty)
     }
 
-    val matrix = Matrix()
-    matrix.postTranslate(-bounds.left, -bounds.top)
-    path.transform(matrix)
-
-    bounds.offset(-bounds.left, -bounds.top)
-    val scaleX = targetSize / bounds.width()
-    val scaleY = targetSize / bounds.height()
-    val scale = minOf(scaleX, scaleY)
-
-    val scaleMatrix = Matrix()
-    scaleMatrix.postScale(scale, scale)
-    path.transform(scaleMatrix)
-
-    return path
+    normalizedPath.transform(matrix)
+    return normalizedPath
 }

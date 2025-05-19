@@ -1,8 +1,6 @@
 package com.erdemkaya.scribbledash.ui.theme
 
-import android.app.Activity
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -31,7 +29,8 @@ private val LightColorScheme = lightColorScheme(
     onSurface = Color(0xFFA5978A),
     surfaceContainerHigh = Color(0xFFEEE7E0),
     surfaceContainerLow = Color(0xFFF8F2ED),
-    surfaceContainerLowest = Color(0xFFE1D5CA)
+    surfaceContainerLowest = Color(0xFFE1D5CA),
+    error = Color(0xFFEF1242)
 )
 
 @Composable

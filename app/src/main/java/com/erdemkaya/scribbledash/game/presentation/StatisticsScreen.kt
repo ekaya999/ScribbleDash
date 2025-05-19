@@ -16,8 +16,7 @@ import com.erdemkaya.scribbledash.game.presentation.components.StatisticsCard
 
 @Composable
 fun StatisticsScreen(
-    modifier: Modifier = Modifier,
-    navHostController: NavHostController,
+    modifier: Modifier = Modifier, navHostController: NavHostController, state: DrawingState
 ) {
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
@@ -36,14 +35,26 @@ fun StatisticsScreen(
         Column(modifier = Modifier.padding(paddingValues)) {
             StatisticsCard(
                 icon = ImageVector.vectorResource(R.drawable.stat_hourglass),
-                text = "Nothing to track...for now",
-                value = 0,
+                text = "Highest Speed Draw accuracy %",
+                value = state.speedDrawAvgHighScore,
                 percentage = true
             )
             StatisticsCard(
                 icon = ImageVector.vectorResource(R.drawable.stat_bolt),
-                text = "Nothing to track...for now",
-                value = 0,
+                text = "Most Meh+ drawings in Speed Draw",
+                value = state.speedDrawSuccessfulDrawHighScore,
+                percentage = false
+            )
+            StatisticsCard(
+                icon = ImageVector.vectorResource(R.drawable.star_background),
+                text = "Highest Endless Mode accuracy %",
+                value = state.endlessDrawAvgHighScore,
+                percentage = true
+            )
+            StatisticsCard(
+                icon = ImageVector.vectorResource(R.drawable.palette),
+                text = "Most drawings completed in Endless Mode",
+                value = state.endlessDrawSuccessfulDrawHighScore,
                 percentage = false
             )
         }

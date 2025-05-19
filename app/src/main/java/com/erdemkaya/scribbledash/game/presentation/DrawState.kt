@@ -4,6 +4,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import androidx.compose.runtime.Immutable
 import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
+import com.erdemkaya.scribbledash.game.presentation.components.GameMode
 import com.erdemkaya.scribbledash.game.presentation.components.PathData
 import com.erdemkaya.scribbledash.game.presentation.components.PathModel
 
@@ -16,7 +17,15 @@ data class DrawingState(
     val drawings: List<PathModel> = emptyList(),
     val examplePath: PathModel = PathModel(path = Path(), bounds = RectF()),
     val score: Int = 0,
+    val successfulDrawings: Int = 0,
     val resultExample: PathModel? = null,
     val resultUser: PathModel? = null,
-    val difficulty: Difficulty = Difficulty.Beginner
+    val difficulty: Difficulty = Difficulty.Beginner,
+    val mode: GameMode = GameMode.ONE_ROUND,
+    val speedDrawAvg: Int = 0,
+    val speedDrawCount: Int = 0,
+    val speedDrawAvgHighScore: Int = 0,
+    val speedDrawSuccessfulDrawHighScore: Int = 0,
+    val endlessDrawAvgHighScore: Int = 0,
+    val endlessDrawSuccessfulDrawHighScore: Int = 0,
 )

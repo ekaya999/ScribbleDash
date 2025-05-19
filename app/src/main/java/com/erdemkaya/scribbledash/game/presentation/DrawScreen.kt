@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,6 +44,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
@@ -51,9 +53,11 @@ import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
 import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
+import com.erdemkaya.scribbledash.game.presentation.components.GameMode
 import com.erdemkaya.scribbledash.game.presentation.components.PathData
 import com.erdemkaya.scribbledash.game.presentation.components.PathModel
 import com.erdemkaya.scribbledash.game.presentation.components.comparePaths
+import com.erdemkaya.scribbledash.game.presentation.components.countdownTimer
 import com.erdemkaya.scribbledash.game.presentation.components.normalizePathToCanvas
 import com.erdemkaya.scribbledash.ui.theme.Success
 import com.erdemkaya.scribbledash.ui.theme.onSurfaceVariant
@@ -72,11 +76,15 @@ fun DrawScreen(
     undoPaths: List<PathData>,
     redoPaths: List<PathData>,
     difficulty: Difficulty,
+    successfulDrawCount: Int,
+    gameMode: GameMode,
     onAction: (DrawingAction) -> Unit,
+    speedDrawCount: Int
 ) {
     val canUndo = undoPaths.isNotEmpty()
     val canRedo = redoPaths.isNotEmpty()
     val canSubmit = paths.isNotEmpty() || currentPath != null
+    val context = LocalContext.current
 
     var drawMode by remember {
         mutableStateOf(false)
@@ -84,6 +92,18 @@ fun DrawScreen(
 
     var countdown by remember {
         mutableIntStateOf(3)
+    }
+
+    var startCountDown by remember {
+        mutableStateOf(false)
+    }
+
+    val countdownText by countdownTimer(
+        totalSeconds = 120, start = startCountDown, drawMode = drawMode
+    )
+
+    val shownDrawings = remember {
+        mutableStateListOf<PathModel>()
     }
 
     LaunchedEffect(key1 = drawMode) {
@@ -96,23 +116,47 @@ fun DrawScreen(
         }
     }
 
-    val randomDrawing = remember(drawings) {
-        drawings.randomOrNull()
+    var randomDrawing by remember {
+        mutableStateOf<PathModel?>(null)
     }
 
-    LaunchedEffect(randomDrawing) {
-        randomDrawing?.let {
-            onAction(DrawingAction.OnExampleSet(randomDrawing))
+    LaunchedEffect(drawMode) {
+        if (!drawMode) {
+            val remaining = drawings.filterNot { shownDrawings.contains(it) }
+            if (remaining.isEmpty()) {
+                shownDrawings.clear()
+            } else {
+                val next = remaining.random()
+                shownDrawings += next
+                randomDrawing = next
+                onAction(DrawingAction.OnExampleSet(next))
+            }
+        }
+    }
+
+    LaunchedEffect(countdownText) {
+        if (gameMode == GameMode.SPEED && countdownText < 1) {
+            navHostController.navigate("result")
         }
     }
 
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
-            title = "", modifier = modifier, showIcon = true, onClickBack = {
+            title = "",
+            modifier = modifier,
+            showIcon = true,
+            onClickBack = {
+                onAction(DrawingAction.OnClearStatisticsClick)
+                onAction(DrawingAction.OnClearCanvasClick)
                 navHostController.navigate("home") {
                     popUpTo("home") { inclusive = true }
                 }
-            })
+            },
+            gameMode = gameMode,
+            countdownTime = countdownText,
+            showTitle = true,
+            drawCount = successfulDrawCount
+        )
     }, bottomBar = {}, content = { paddingValues ->
         Column(
             modifier = Modifier
@@ -139,7 +183,10 @@ fun DrawScreen(
                         .fillMaxSize()
                         .then(if (drawMode) Modifier.pointerInput(Unit) {
                             detectDragGestures(
-                                onDragStart = { onAction(DrawingAction.OnNewPathStart) },
+                                onDragStart = {
+                                    startCountDown = true
+                                    onAction(DrawingAction.OnNewPathStart)
+                                },
                                 onDragEnd = { onAction(DrawingAction.OnPathEnd) },
                                 onDrag = { change, _ -> onAction(DrawingAction.OnDraw(change.position)) },
                                 onDragCancel = { onAction(DrawingAction.OnPathEnd) })
@@ -267,6 +314,7 @@ fun DrawScreen(
                             }
 
                             val finalScore = comparePaths(
+                                context = context,
                                 userPath = userPath,
                                 examplePath = examplePath,
                                 exampleStrokeMultiplier = difficultyMultiplier
@@ -275,11 +323,21 @@ fun DrawScreen(
                                 DrawingAction.OnDoneClick(
                                     example = PathModel(examplePath, exampleBounds),
                                     user = PathModel(userPath, userBounds),
-                                    score = finalScore.toInt()
+                                    score = finalScore.toInt(),
+                                    successfulDrawCount = if ((gameMode == GameMode.SPEED && finalScore.toInt() >= 40) || (gameMode == GameMode.ENDLESS && finalScore.toInt() >= 70)) successfulDrawCount + 1 else successfulDrawCount,
+                                    speedDrawCount = speedDrawCount + 1
                                 )
                             )
+                            //for testing
+                            //onAction(DrawingAction.OnClearDataStore)
 
-                            navHostController.navigate("result")
+                            if (gameMode == GameMode.SPEED) {
+                                drawMode = false
+                                onAction(DrawingAction.OnClearCanvasClick)
+                                countdown = 3
+                            } else {
+                                navHostController.navigate("result")
+                            }
                         },
                         enabled = canSubmit,
                         modifier = Modifier.fillMaxHeight(),

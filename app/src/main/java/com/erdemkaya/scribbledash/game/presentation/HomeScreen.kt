@@ -21,17 +21,23 @@ import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashNavBar
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
+import com.erdemkaya.scribbledash.game.presentation.components.GameMode
 import com.erdemkaya.scribbledash.game.presentation.components.ModeCard
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradEnd
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradStart
+import com.erdemkaya.scribbledash.ui.theme.BorderBlue
+import com.erdemkaya.scribbledash.ui.theme.BorderGreen
+import com.erdemkaya.scribbledash.ui.theme.BorderOrange
 
 @Composable
 fun HomeScreen(
-    modifier: Modifier = Modifier, navHostController: NavHostController
+    modifier: Modifier = Modifier, navHostController: NavHostController,
+    onAction: (DrawingAction) -> Unit,
 ) {
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
             title = "ScribbleDash",
+            showTitle = true,
             modifier = modifier,
             showIcon = false,
             homeScreen = true
@@ -73,7 +79,32 @@ fun HomeScreen(
                 ModeCard(
                     title = "One Round Wonder",
                     icon = ImageVector.vectorResource(R.drawable.one_round_wonder),
-                    onClick = { navHostController.navigate("difficulty") }
+                    borderColor = BorderGreen,
+                    onClick = {
+                        onAction(DrawingAction.OnGameModeSet(GameMode.ONE_ROUND))
+                        navHostController.navigate("difficulty")
+                    }
+                )
+                Spacer(Modifier.height(16.dp))
+                ModeCard(
+                    title = "Speed Draw",
+                    icon = ImageVector.vectorResource(R.drawable.speed_draw),
+                    borderColor = BorderBlue,
+                    onClick = {
+                        onAction(DrawingAction.OnGameModeSet(GameMode.SPEED))
+                        onAction(DrawingAction.OnClearCanvasClick)
+                        navHostController.navigate("difficulty")
+                    }
+                )
+                Spacer(Modifier.height(16.dp))
+                ModeCard(
+                    title = "Endless Mode",
+                    icon = ImageVector.vectorResource(R.drawable.endless_mode),
+                    borderColor = BorderOrange,
+                    onClick = {
+                        onAction(DrawingAction.OnGameModeSet(GameMode.ENDLESS))
+                        navHostController.navigate("difficulty")
+                    }
                 )
             }
         }
