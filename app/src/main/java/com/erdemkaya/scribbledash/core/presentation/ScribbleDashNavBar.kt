@@ -32,8 +32,8 @@ fun ScribbleDashNavBar(
             NavigationBarItem(
                 selected = currentScreen == item.screenRoute,
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = MaterialTheme.colorScheme.onSurface,
-                    unselectedIconColor = MaterialTheme.colorScheme.primary,
+                    selectedIconColor = MaterialTheme.colorScheme.primary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurface,
                     indicatorColor = Color.Transparent
                 ),
                 onClick = {

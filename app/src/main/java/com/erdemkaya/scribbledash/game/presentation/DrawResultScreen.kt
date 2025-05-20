@@ -114,12 +114,12 @@ fun DrawResultScreen(
         (state.speedDrawAvg.toDouble() / state.speedDrawCount).roundToInt()
     } else 0
 
-    if (state.speedDrawAvgHighScore < scoreAvg) {
+    if (state.speedDrawAvgHighScore < scoreAvg && state.speedGameEnded) {
         onAction(DrawingAction.UpdateHighScore(scoreAvg, "speedAvg"))
         highScoreSpeedAvg = true
     }
 
-    if (state.speedDrawSuccessfulDrawHighScore < state.successfulDrawings) {
+    if (state.speedDrawSuccessfulDrawHighScore < state.successfulDrawings && state.speedGameEnded) {
         onAction(DrawingAction.UpdateHighScore(state.successfulDrawings, "speedCount"))
         highScoreSpeedCount = true
     }

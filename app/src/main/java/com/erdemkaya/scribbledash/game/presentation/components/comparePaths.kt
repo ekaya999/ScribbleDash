@@ -11,6 +11,7 @@ import android.graphics.Typeface
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.get
 import androidx.core.graphics.set
+import kotlin.math.hypot
 
 fun comparePaths(
     context: Context,
@@ -126,6 +127,10 @@ fun comparePaths(
 //        else -> rawScore
 //    }
 
+    if (isPathTooSimple(userPath, userBounds)) {
+        return 0f //
+    }
+
     return rawScore.coerceIn(0f, 100f)
 }
 
@@ -137,4 +142,11 @@ fun calculatePathLength(path: Path): Float {
         length += pm.length
     } while (pm.nextContour())
     return length
+}
+
+fun isPathTooSimple(path: Path, bounds: RectF, threshold: Float = 0.98f): Boolean {
+    val diagonalLength = hypot(bounds.width(), bounds.height())
+    val pathLength = calculatePathLength(path)
+    val straightnessRatio = diagonalLength / pathLength
+    return straightnessRatio > threshold
 }

@@ -136,6 +136,7 @@ fun DrawScreen(
 
     LaunchedEffect(countdownText) {
         if (gameMode == GameMode.SPEED && countdownText < 1) {
+            onAction(DrawingAction.OnSpeedGameEnded)
             navHostController.navigate("result")
         }
     }

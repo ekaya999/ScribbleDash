@@ -74,6 +74,15 @@ class DrawViewModel(
             is DrawingAction.UpdateHighScore -> updateHighScore(action.newScore, action.key)
             DrawingAction.OnClearDataStore -> clearDataStore()
             DrawingAction.OnClearStatisticsClick -> onClearStatisticsClick()
+            DrawingAction.OnSpeedGameEnded -> onSpeedGameEnded()
+        }
+    }
+
+    private fun onSpeedGameEnded() {
+        _state.update {
+            it.copy(
+                speedGameEnded = true
+            )
         }
     }
 
@@ -82,7 +91,8 @@ class DrawViewModel(
             it.copy(
                 speedDrawAvg = 0,
                 speedDrawCount = 0,
-                successfulDrawings = 0
+                successfulDrawings = 0,
+                speedGameEnded = false
             )
         }
     }
@@ -129,6 +139,7 @@ class DrawViewModel(
                 redoPaths = emptyList(),
                 resultExample = null,
                 resultUser = null,
+                speedGameEnded = false
             )
         }
     }

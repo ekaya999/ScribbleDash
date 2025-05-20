@@ -28,4 +28,5 @@ data class DrawingState(
     val speedDrawSuccessfulDrawHighScore: Int = 0,
     val endlessDrawAvgHighScore: Int = 0,
     val endlessDrawSuccessfulDrawHighScore: Int = 0,
+    val speedGameEnded: Boolean = false,
 )

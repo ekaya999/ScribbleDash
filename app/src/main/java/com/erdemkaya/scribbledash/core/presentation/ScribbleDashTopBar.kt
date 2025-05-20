@@ -93,15 +93,19 @@ fun ScribbleDashTopBar(
         },
         actions = {
             if (showIcon) {
-                IconButton(
-                    onClick = {
-                        onClickBack()
-                    }) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.close_circle),
-                        contentDescription = "Close",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
+                if (homeScreen) {
+
+                } else {
+                    IconButton(
+                        onClick = {
+                            onClickBack()
+                        }) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.close_circle),
+                            contentDescription = "Close",
+                            tint = MaterialTheme.colorScheme.onBackground
+                        )
+                    }
                 }
             }
         },
@@ -154,9 +158,10 @@ fun MyTopAppBarPreview() {
             title = "ScribbleDash",
             showIcon = true,
             showTitle = true,
+            homeScreen = true,
             countdownTime = 30,
             drawCount = 5,
-            gameMode = GameMode.ENDLESS
+            gameMode = GameMode.SPEED
         )
     }
 }

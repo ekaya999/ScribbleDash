@@ -25,4 +25,5 @@ sealed interface DrawingAction {
     data class OnGameModeSet(val mode: GameMode) : DrawingAction
     data class UpdateHighScore(val newScore: Int, val key: String) : DrawingAction
     data object OnClearDataStore : DrawingAction
+    data object OnSpeedGameEnded : DrawingAction
 }
