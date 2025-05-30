@@ -24,8 +24,8 @@ import androidx.navigation.NavHostController
 import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
-import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
-import com.erdemkaya.scribbledash.game.presentation.components.DifficultyIcon
+import com.erdemkaya.scribbledash.game.presentation.components.enums.Difficulty
+import com.erdemkaya.scribbledash.game.presentation.components.ui.DifficultyIcon
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradEnd
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradStart
 

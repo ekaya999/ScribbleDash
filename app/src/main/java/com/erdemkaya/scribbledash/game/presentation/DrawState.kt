@@ -3,10 +3,10 @@ package com.erdemkaya.scribbledash.game.presentation
 import android.graphics.Path
 import android.graphics.RectF
 import androidx.compose.runtime.Immutable
-import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
-import com.erdemkaya.scribbledash.game.presentation.components.GameMode
-import com.erdemkaya.scribbledash.game.presentation.components.PathData
-import com.erdemkaya.scribbledash.game.presentation.components.PathModel
+import com.erdemkaya.scribbledash.game.presentation.components.enums.Difficulty
+import com.erdemkaya.scribbledash.game.presentation.components.enums.GameMode
+import com.erdemkaya.scribbledash.game.presentation.models.PathData
+import com.erdemkaya.scribbledash.game.presentation.models.PathModel
 
 @Immutable
 data class DrawingState(
@@ -29,4 +29,10 @@ data class DrawingState(
     val endlessDrawAvgHighScore: Int = 0,
     val endlessDrawSuccessfulDrawHighScore: Int = 0,
     val speedGameEnded: Boolean = false,
+    val coinsAvailable: Int = 300,
+    val purchasedPens: Set<String> = emptySet(),
+    val purchasedCanvasColors: Set<String> = emptySet(),
+    val activePen: String = "MidnightBlack",
+    val activeCanvasColor: String = "White",
+    val coinsEarned: Int = 0
 )

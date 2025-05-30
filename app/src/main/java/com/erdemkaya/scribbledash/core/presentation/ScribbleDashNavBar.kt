@@ -22,6 +22,7 @@ fun ScribbleDashNavBar(
     val items = listOf(
         ScribbleDashNavBarItem.Statistics,
         ScribbleDashNavBarItem.Home,
+        ScribbleDashNavBarItem.Shop,
     )
 
     NavigationBar(

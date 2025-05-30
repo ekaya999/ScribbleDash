@@ -1,9 +1,9 @@
 package com.erdemkaya.scribbledash.game.presentation
 
 import androidx.compose.ui.geometry.Offset
-import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
-import com.erdemkaya.scribbledash.game.presentation.components.GameMode
-import com.erdemkaya.scribbledash.game.presentation.components.PathModel
+import com.erdemkaya.scribbledash.game.presentation.components.enums.Difficulty
+import com.erdemkaya.scribbledash.game.presentation.components.enums.GameMode
+import com.erdemkaya.scribbledash.game.presentation.models.PathModel
 
 sealed interface DrawingAction {
     data object OnNewPathStart : DrawingAction
@@ -26,4 +26,11 @@ sealed interface DrawingAction {
     data class UpdateHighScore(val newScore: Int, val key: String) : DrawingAction
     data object OnClearDataStore : DrawingAction
     data object OnSpeedGameEnded : DrawingAction
+    data class OnSetActivePen(val name: String) : DrawingAction
+    data class OnSetActiveCanvasColor(val name: String) : DrawingAction
+    data class OnPurchasedPenSet(val name: String, val price: Int) : DrawingAction
+    data class OnPurchasedCanvasColorSet(val name: String, val price: Int) : DrawingAction
+    data class OnCoinsEarned(val coins: Int) : DrawingAction
+    data object OnCoinsUpdate : DrawingAction
+    data class ManipulateDataStore(val price: Int) : DrawingAction
 }

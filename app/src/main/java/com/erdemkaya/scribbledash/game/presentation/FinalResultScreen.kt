@@ -37,8 +37,8 @@ import androidx.navigation.NavHostController
 import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
-import com.erdemkaya.scribbledash.game.presentation.components.DrawCounter
-import com.erdemkaya.scribbledash.game.presentation.components.HighScoreCard
+import com.erdemkaya.scribbledash.game.presentation.components.ui.DrawCounter
+import com.erdemkaya.scribbledash.game.presentation.components.ui.HighScoreCard
 import com.erdemkaya.scribbledash.ui.theme.Pink
 import com.erdemkaya.scribbledash.ui.theme.onBackgroundVariant
 import kotlin.math.roundToInt
@@ -82,6 +82,7 @@ fun FinalResultScreen(
             modifier = modifier,
             showIcon = true,
             onClickBack = {
+                onAction(DrawingAction.OnCoinsUpdate)
                 onAction(DrawingAction.OnClearCanvasClick)
                 onAction(DrawingAction.OnClearStatisticsClick)
                 navHostController.navigate("home") {
@@ -113,6 +114,7 @@ fun FinalResultScreen(
                 else -> "Woohoo!"
             }
             val feedbackText = stringResource(randomFeedbackId)
+
             Box(
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -175,14 +177,23 @@ fun FinalResultScreen(
                             textAlign = TextAlign.Center
                         )
                         Spacer(Modifier.height(8.dp))
-                        DrawCounter(
-                            count = state.successfulDrawings,
-                            imageVector = if (highScoreEndlessCount) ImageVector.vectorResource(R.drawable.draw_count_outlined) else ImageVector.vectorResource(
-                                R.drawable.draw_count
-                            ),
-                            backgroundColor = if (highScoreEndlessCount) Pink else MaterialTheme.colorScheme.surfaceContainerLow,
-                            highScore = highScoreEndlessCount
-                        )
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                            DrawCounter(
+                                count = state.successfulDrawings,
+                                imageVector = if (highScoreEndlessCount) ImageVector.vectorResource(
+                                    R.drawable.draw_count_outlined
+                                ) else ImageVector.vectorResource(
+                                    R.drawable.draw_count
+                                ),
+                                backgroundColor = if (highScoreEndlessCount) Pink else MaterialTheme.colorScheme.surfaceContainerLow,
+                                highScore = highScoreEndlessCount
+                            )
+                            DrawCounter(
+                                count = state.coinsEarned,
+                                imageVector = ImageVector.vectorResource(R.drawable.coin),
+                                coinsEarned = true
+                            )
+                        }
                         Spacer(Modifier.height(4.dp))
                         if (highScoreEndlessCount) {
                             Text(
@@ -210,6 +221,7 @@ fun FinalResultScreen(
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {
+                    onAction(DrawingAction.OnCoinsUpdate)
                     onAction(DrawingAction.OnClearCanvasClick)
                     onAction(DrawingAction.OnClearStatisticsClick)
                     navHostController.navigate("draw")

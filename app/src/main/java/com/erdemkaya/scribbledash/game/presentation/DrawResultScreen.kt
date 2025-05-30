@@ -38,10 +38,11 @@ import androidx.navigation.NavHostController
 import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
-import com.erdemkaya.scribbledash.game.presentation.components.DrawCounter
-import com.erdemkaya.scribbledash.game.presentation.components.GameMode
-import com.erdemkaya.scribbledash.game.presentation.components.HighScoreCard
-import com.erdemkaya.scribbledash.game.presentation.components.ResultComparisonSection
+import com.erdemkaya.scribbledash.game.presentation.components.enums.Difficulty
+import com.erdemkaya.scribbledash.game.presentation.components.enums.GameMode
+import com.erdemkaya.scribbledash.game.presentation.components.ui.DrawCounter
+import com.erdemkaya.scribbledash.game.presentation.components.ui.HighScoreCard
+import com.erdemkaya.scribbledash.game.presentation.components.utils.ResultComparisonSection
 import com.erdemkaya.scribbledash.ui.theme.Pink
 import com.erdemkaya.scribbledash.ui.theme.Success
 import com.erdemkaya.scribbledash.ui.theme.onBackgroundVariant
@@ -124,12 +125,17 @@ fun DrawResultScreen(
         highScoreSpeedCount = true
     }
 
+    var coinsEarned = 0.0
+
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
             title = "",
             modifier = modifier,
             showIcon = true,
             onClickBack = {
+                onAction(DrawingAction.OnCoinsEarned(coinsEarned.roundToInt()))
+                onAction(DrawingAction.OnCoinsUpdate)
+                onAction(DrawingAction.OnClearStatisticsClick)
                 onAction(DrawingAction.OnClearCanvasClick)
                 navHostController.navigate("home") {
                     popUpTo("home") { inclusive = true }
@@ -174,7 +180,12 @@ fun DrawResultScreen(
                 state.resultExample?.let {
                     state.resultUser?.let { it1 ->
                         ResultComparisonSection(
-                            examplePath = it, userPath = it1, mode = state.mode, score = state.score
+                            examplePath = it,
+                            userPath = it1,
+                            mode = state.mode,
+                            score = state.score,
+                            activePen = state.activePen,
+                            activeCanvas = state.activeCanvasColor
                         )
                     }
                 }
@@ -191,12 +202,35 @@ fun DrawResultScreen(
             }
             val feedbackText = stringResource(randomFeedbackId)
 
+            val coinsBase = when (state.score) {
+                in (0..0) -> 0
+                in (1..39) -> 1
+                in (40..69) -> 2
+                in (70..79) -> 4
+                else -> 6
+            }
+
+            val coinsMultiplication: Double = when (state.difficulty) {
+                Difficulty.Beginner -> .5
+                Difficulty.Challenging -> 1.0
+                Difficulty.Master -> 1.75
+            }
+
+            coinsEarned = coinsBase * coinsMultiplication
+            if (coinsEarned < 1) coinsEarned = 1.0
+
             if (state.mode == GameMode.ONE_ROUND || state.mode == GameMode.ENDLESS) {
                 Text(
                     text = feedbackText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = onBackgroundVariant,
                     textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(4.dp))
+                DrawCounter(
+                    count = coinsEarned.roundToInt(),
+                    imageVector = ImageVector.vectorResource(R.drawable.coin),
+                    coinsEarned = true
                 )
             } else if (state.mode == GameMode.SPEED) {
                 Box(
@@ -259,14 +293,26 @@ fun DrawResultScreen(
                                 textAlign = TextAlign.Center
                             )
                             Spacer(Modifier.height(8.dp))
-                            DrawCounter(
-                                count = state.successfulDrawings,
-                                imageVector = if (highScoreSpeedCount) ImageVector.vectorResource(R.drawable.draw_count_outlined) else ImageVector.vectorResource(
-                                    R.drawable.draw_count
-                                ),
-                                backgroundColor = if (highScoreSpeedCount) Pink else MaterialTheme.colorScheme.surfaceContainerLow,
-                                highScore = highScoreSpeedCount
-                            )
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                DrawCounter(
+                                    count = state.successfulDrawings,
+                                    imageVector = if (highScoreSpeedCount) ImageVector.vectorResource(
+                                        R.drawable.draw_count_outlined
+                                    ) else ImageVector.vectorResource(
+                                        R.drawable.draw_count
+                                    ),
+                                    backgroundColor = if (highScoreSpeedCount) Pink else MaterialTheme.colorScheme.surfaceContainerLow,
+                                    highScore = highScoreSpeedCount
+                                )
+                                DrawCounter(
+                                    count = coinsEarned.roundToInt(),
+                                    imageVector = ImageVector.vectorResource(R.drawable.coin),
+                                    coinsEarned = true
+                                )
+                            }
                             Spacer(Modifier.height(4.dp))
                             if (highScoreSpeedCount) {
                                 Text(
@@ -295,9 +341,13 @@ fun DrawResultScreen(
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 onClick = {
+                    onAction(DrawingAction.OnCoinsEarned(coinsEarned.roundToInt()))
                     onAction(DrawingAction.OnClearCanvasClick)
 
-                    if (state.mode != GameMode.ENDLESS) onAction(DrawingAction.OnClearStatisticsClick)
+                    if (state.mode != GameMode.ENDLESS) {
+                        onAction(DrawingAction.OnCoinsUpdate)
+                        onAction(DrawingAction.OnClearStatisticsClick)
+                    }
 
                     if (state.mode == GameMode.SPEED) {
                         navHostController.navigate("draw")
@@ -337,6 +387,7 @@ fun DrawResultScreen(
             if (state.mode == GameMode.ENDLESS && state.score >= 70) {
                 Button(
                     onClick = {
+                        onAction(DrawingAction.OnCoinsEarned(coinsEarned.roundToInt()))
                         onAction(DrawingAction.OnClearCanvasClick)
                         navHostController.navigate("draw")
                     },

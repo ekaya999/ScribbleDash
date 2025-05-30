@@ -13,6 +13,7 @@ import com.erdemkaya.scribbledash.game.presentation.DrawScreen
 import com.erdemkaya.scribbledash.game.presentation.DrawViewModel
 import com.erdemkaya.scribbledash.game.presentation.FinalResultScreen
 import com.erdemkaya.scribbledash.game.presentation.HomeScreen
+import com.erdemkaya.scribbledash.game.presentation.ShopScreen
 import com.erdemkaya.scribbledash.game.presentation.StatisticsScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -33,7 +34,8 @@ fun NavHostMain(
             HomeScreen(
                 modifier = Modifier,
                 navHostController = navController,
-                onAction = drawViewModel::onAction
+                onAction = drawViewModel::onAction,
+                state = drawState
             )
         }
         composable("difficulty") {
@@ -55,7 +57,9 @@ fun NavHostMain(
                 gameMode = drawState.mode,
                 successfulDrawCount = drawState.successfulDrawings,
                 onAction = drawViewModel::onAction,
-                speedDrawCount = drawState.speedDrawCount
+                speedDrawCount = drawState.speedDrawCount,
+                activePen = drawState.activePen,
+                activeCanvas = drawState.activeCanvasColor
             )
         }
         composable("result") {
@@ -75,6 +79,14 @@ fun NavHostMain(
         }
         composable("final") {
             FinalResultScreen(
+                modifier = Modifier,
+                navHostController = navController,
+                state = drawState,
+                onAction = drawViewModel::onAction
+            )
+        }
+        composable("shop") {
+            ShopScreen(
                 modifier = Modifier,
                 navHostController = navController,
                 state = drawState,

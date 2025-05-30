@@ -8,4 +8,5 @@ sealed class ScribbleDashNavBarItem(
 ) {
     object Home: ScribbleDashNavBarItem(R.drawable.home, "home")
     object Statistics : ScribbleDashNavBarItem(R.drawable.chart, "statistics")
+    object Shop : ScribbleDashNavBarItem(R.drawable.shop, "shop")
 }

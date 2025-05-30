@@ -3,12 +3,15 @@ package com.erdemkaya.scribbledash.game.presentation
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
-import com.erdemkaya.scribbledash.game.presentation.components.DrawingLoader
-import com.erdemkaya.scribbledash.game.presentation.components.GameMode
-import com.erdemkaya.scribbledash.game.presentation.components.HighScoreDataStore
-import com.erdemkaya.scribbledash.game.presentation.components.PathData
-import com.erdemkaya.scribbledash.game.presentation.components.PathModel
+import com.erdemkaya.scribbledash.game.presentation.components.enums.Difficulty
+import com.erdemkaya.scribbledash.game.presentation.components.enums.GameMode
+import com.erdemkaya.scribbledash.game.presentation.components.ui.CoinsDataStore
+import com.erdemkaya.scribbledash.game.presentation.components.ui.HighScoreDataStore
+import com.erdemkaya.scribbledash.game.presentation.components.ui.PurchasedCanvasDataStore
+import com.erdemkaya.scribbledash.game.presentation.components.ui.PurchasedPenDataStore
+import com.erdemkaya.scribbledash.game.presentation.components.utils.DrawingLoader
+import com.erdemkaya.scribbledash.game.presentation.models.PathData
+import com.erdemkaya.scribbledash.game.presentation.models.PathModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,12 +23,19 @@ import kotlinx.coroutines.launch
 
 
 class DrawViewModel(
-    private val drawingLoader: DrawingLoader, private val dataStore: HighScoreDataStore
+    private val drawingLoader: DrawingLoader,
+    private val dataStore: HighScoreDataStore,
+    private val dataStorePen: PurchasedPenDataStore,
+    private val dataStoreCanvas: PurchasedCanvasDataStore,
+    private val dataStoreCoins: CoinsDataStore,
 ) : ViewModel() {
     private val _state = MutableStateFlow(DrawingState())
     val state = _state.onStart {
         loadDrawings()
         loadHighScores()
+        loadPurchasedPens()
+        loadPurchasedCanvas()
+        loadCoins()
     }.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5000L), DrawingState()
     )
@@ -47,6 +57,43 @@ class DrawViewModel(
                     speedDrawSuccessfulDrawHighScore = dataStore.speedDrawCount.first(),
                     endlessDrawAvgHighScore = dataStore.endlessDrawAvg.first(),
                     endlessDrawSuccessfulDrawHighScore = dataStore.endlessDrawCount.first()
+                )
+            }
+        }
+    }
+
+    private fun loadPurchasedPens() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    purchasedPens = dataStorePen.purchasedPens.first(), activePen = "MidnightBlack"
+                )
+            }
+        }
+        if ("MidnightBlack" !in state.value.purchasedPens) {
+            updatePurchasedPenSet("MidnightBlack", 0)
+        }
+    }
+
+    private fun loadPurchasedCanvas() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    purchasedCanvasColors = dataStoreCanvas.purchasedCanvas.first(),
+                    activeCanvasColor = "White"
+                )
+            }
+        }
+        if ("White" !in state.value.purchasedCanvasColors) {
+            updatePurchasedCanvasColorSet("White", 0)
+        }
+    }
+
+    private fun loadCoins() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    coinsAvailable = dataStoreCoins.coins.first()
                 )
             }
         }
@@ -75,6 +122,17 @@ class DrawViewModel(
             DrawingAction.OnClearDataStore -> clearDataStore()
             DrawingAction.OnClearStatisticsClick -> onClearStatisticsClick()
             DrawingAction.OnSpeedGameEnded -> onSpeedGameEnded()
+            is DrawingAction.OnPurchasedPenSet -> updatePurchasedPenSet(action.name, action.price)
+            is DrawingAction.OnSetActivePen -> updateActivePen(action.name)
+            is DrawingAction.ManipulateDataStore -> manipulateDataStore(action.price)
+            is DrawingAction.OnSetActiveCanvasColor -> updateActiveCanvasColor(action.name)
+            is DrawingAction.OnPurchasedCanvasColorSet -> updatePurchasedCanvasColorSet(
+                action.name,
+                action.price
+            )
+
+            is DrawingAction.OnCoinsEarned -> updateCoinsEarned(action.coins)
+            DrawingAction.OnCoinsUpdate -> updateCoins()
         }
     }
 
@@ -92,7 +150,8 @@ class DrawViewModel(
                 speedDrawAvg = 0,
                 speedDrawCount = 0,
                 successfulDrawings = 0,
-                speedGameEnded = false
+                speedGameEnded = false,
+                coinsEarned = 0
             )
         }
     }
@@ -183,11 +242,7 @@ class DrawViewModel(
     }
 
     private fun onDone(
-        example: PathModel,
-        user: PathModel,
-        score: Int,
-        drawCount: Int,
-        speedDrawCount: Int
+        example: PathModel, user: PathModel, score: Int, drawCount: Int, speedDrawCount: Int
     ) {
         _state.update {
             it.copy(
@@ -277,6 +332,80 @@ class DrawViewModel(
                 speedDrawSuccessfulDrawHighScore = 0,
                 endlessDrawAvgHighScore = 0,
                 endlessDrawSuccessfulDrawHighScore = 0
+            )
+        }
+    }
+
+    private fun updatePurchasedPenSet(name: String, price: Int) {
+        viewModelScope.launch {
+            dataStorePen.savePurchasedPen(name)
+            dataStoreCoins.updateCoins(state.value.coinsAvailable - price)
+        }
+        _state.update {
+            it.copy(
+                purchasedPens = it.purchasedPens + name,
+                activePen = name,
+                coinsAvailable = it.coinsAvailable - price
+            )
+        }
+    }
+
+    private fun updatePurchasedCanvasColorSet(name: String, price: Int) {
+        viewModelScope.launch {
+            dataStoreCanvas.savePurchasedCanvas(name)
+            dataStoreCoins.updateCoins(state.value.coinsAvailable - price)
+        }
+        _state.update {
+            it.copy(
+                purchasedCanvasColors = it.purchasedCanvasColors + name,
+                activeCanvasColor = name,
+                coinsAvailable = it.coinsAvailable - price
+            )
+        }
+    }
+
+    private fun updateActivePen(name: String) {
+        _state.update {
+            it.copy(
+                activePen = name
+            )
+        }
+    }
+
+    private fun updateActiveCanvasColor(name: String) {
+        _state.update {
+            it.copy(
+                activeCanvasColor = name
+            )
+        }
+    }
+
+    private fun updateCoins() {
+        viewModelScope.launch {
+            dataStoreCoins.updateCoins(_state.value.coinsEarned)
+        }
+        _state.update {
+            it.copy(
+                coinsAvailable = it.coinsAvailable + it.coinsEarned
+            )
+        }
+    }
+
+    private fun updateCoinsEarned(coins: Int) {
+        _state.update {
+            it.copy(
+                coinsEarned = it.coinsEarned + coins
+            )
+        }
+    }
+
+    private fun manipulateDataStore(price: Int) {
+        viewModelScope.launch {
+            dataStoreCoins.updateCoins(price)
+        }
+        _state.update {
+            it.copy(
+                coinsAvailable = price
             )
         }
     }

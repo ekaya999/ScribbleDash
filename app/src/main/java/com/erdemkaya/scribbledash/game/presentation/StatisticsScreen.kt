@@ -11,7 +11,7 @@ import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashNavBar
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
-import com.erdemkaya.scribbledash.game.presentation.components.StatisticsCard
+import com.erdemkaya.scribbledash.game.presentation.components.ui.StatisticsCard
 
 
 @Composable

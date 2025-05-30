@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
@@ -28,8 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.erdemkaya.scribbledash.R
-import com.erdemkaya.scribbledash.game.presentation.components.DrawCounter
-import com.erdemkaya.scribbledash.game.presentation.components.GameMode
+import com.erdemkaya.scribbledash.game.presentation.components.enums.GameMode
+import com.erdemkaya.scribbledash.game.presentation.components.ui.DrawCounter
 import com.erdemkaya.scribbledash.ui.theme.ScribbleDashTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,7 +44,8 @@ fun ScribbleDashTopBar(
     homeScreen: Boolean = false,
     countdownTime: Int = 120,
     drawCount: Int = 0,
-    gameMode: GameMode = GameMode.ONE_ROUND
+    gameMode: GameMode = GameMode.ONE_ROUND,
+    availableCoins: Int = 0,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val isWarning = countdownTime < 31
@@ -94,7 +96,12 @@ fun ScribbleDashTopBar(
         actions = {
             if (showIcon) {
                 if (homeScreen) {
-
+                    DrawCounter(
+                        count = availableCoins,
+                        imageVector = ImageVector.vectorResource(R.drawable.coin),
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                    )
                 } else {
                     IconButton(
                         onClick = {
@@ -161,7 +168,7 @@ fun MyTopAppBarPreview() {
             homeScreen = true,
             countdownTime = 30,
             drawCount = 5,
-            gameMode = GameMode.SPEED
+            gameMode = GameMode.ONE_ROUND
         )
     }
 }

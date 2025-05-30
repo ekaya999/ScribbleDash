@@ -21,8 +21,8 @@ import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashNavBar
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
-import com.erdemkaya.scribbledash.game.presentation.components.GameMode
-import com.erdemkaya.scribbledash.game.presentation.components.ModeCard
+import com.erdemkaya.scribbledash.game.presentation.components.enums.GameMode
+import com.erdemkaya.scribbledash.game.presentation.components.ui.ModeCard
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradEnd
 import com.erdemkaya.scribbledash.ui.theme.BackgroundGradStart
 import com.erdemkaya.scribbledash.ui.theme.BorderBlue
@@ -33,14 +33,16 @@ import com.erdemkaya.scribbledash.ui.theme.BorderOrange
 fun HomeScreen(
     modifier: Modifier = Modifier, navHostController: NavHostController,
     onAction: (DrawingAction) -> Unit,
+    state: DrawingState
 ) {
     ScribbleDashScaffold(topAppBar = {
         ScribbleDashTopBar(
             title = "ScribbleDash",
             showTitle = true,
             modifier = modifier,
-            showIcon = false,
-            homeScreen = true
+            showIcon = true,
+            homeScreen = true,
+            availableCoins = state.coinsAvailable
         )
     }, bottomBar = {
         ScribbleDashNavBar(

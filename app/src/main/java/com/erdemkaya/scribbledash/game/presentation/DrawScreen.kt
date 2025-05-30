@@ -3,6 +3,7 @@ package com.erdemkaya.scribbledash.game.presentation
 import android.graphics.RectF
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.asComposePath
@@ -44,7 +46,9 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
@@ -52,13 +56,18 @@ import androidx.navigation.NavHostController
 import com.erdemkaya.scribbledash.R
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashScaffold
 import com.erdemkaya.scribbledash.core.presentation.ScribbleDashTopBar
-import com.erdemkaya.scribbledash.game.presentation.components.Difficulty
-import com.erdemkaya.scribbledash.game.presentation.components.GameMode
-import com.erdemkaya.scribbledash.game.presentation.components.PathData
-import com.erdemkaya.scribbledash.game.presentation.components.PathModel
-import com.erdemkaya.scribbledash.game.presentation.components.comparePaths
-import com.erdemkaya.scribbledash.game.presentation.components.countdownTimer
-import com.erdemkaya.scribbledash.game.presentation.components.normalizePathToCanvas
+import com.erdemkaya.scribbledash.game.presentation.components.enums.Difficulty
+import com.erdemkaya.scribbledash.game.presentation.components.enums.GameMode
+import com.erdemkaya.scribbledash.game.presentation.components.utils.CanvasColor
+import com.erdemkaya.scribbledash.game.presentation.components.utils.PenColor
+import com.erdemkaya.scribbledash.game.presentation.components.utils.comparePaths
+import com.erdemkaya.scribbledash.game.presentation.components.utils.countdownTimer
+import com.erdemkaya.scribbledash.game.presentation.components.utils.getCanvasColorByName
+import com.erdemkaya.scribbledash.game.presentation.components.utils.getImageIdByName
+import com.erdemkaya.scribbledash.game.presentation.components.utils.getPenColorByName
+import com.erdemkaya.scribbledash.game.presentation.components.utils.normalizePathToCanvas
+import com.erdemkaya.scribbledash.game.presentation.models.PathData
+import com.erdemkaya.scribbledash.game.presentation.models.PathModel
 import com.erdemkaya.scribbledash.ui.theme.Success
 import com.erdemkaya.scribbledash.ui.theme.onSurfaceVariant
 import kotlinx.coroutines.delay
@@ -79,7 +88,9 @@ fun DrawScreen(
     successfulDrawCount: Int,
     gameMode: GameMode,
     onAction: (DrawingAction) -> Unit,
-    speedDrawCount: Int
+    speedDrawCount: Int,
+    activePen: String,
+    activeCanvas: String
 ) {
     val canUndo = undoPaths.isNotEmpty()
     val canRedo = redoPaths.isNotEmpty()
@@ -171,14 +182,36 @@ fun DrawScreen(
                 style = MaterialTheme.typography.displayMedium,
             )
             Spacer(Modifier.height(8.dp))
+            val canvasColor = getCanvasColorByName(activeCanvas)
+            var canvasSpecial = false
+            var backgroundBox = Color.White
+            when (canvasColor) {
+                is CanvasColor.Solid -> {
+                    backgroundBox = canvasColor.color
+                    canvasSpecial = false
+                }
+
+                else -> {
+                    backgroundBox = Color.White
+                    canvasSpecial = true
+                }
+            }
             Box(
                 modifier = Modifier
                     .aspectRatio(1f)
                     .shadow(
                         elevation = 4.dp, shape = RoundedCornerShape(10.dp)
                     )
-                    .background(Color.White)
+                    .background(backgroundBox)
             ) {
+                if (canvasSpecial) {
+                    Image(
+                        modifier = Modifier.fillMaxSize(),
+                        bitmap = ImageBitmap.imageResource(getImageIdByName(activeCanvas)!!),
+                        contentDescription = null,
+                        contentScale = ContentScale.FillBounds
+                    )
+                }
                 Canvas(
                     modifier = Modifier
                         .fillMaxSize()
@@ -218,16 +251,20 @@ fun DrawScreen(
                         end = Offset(size.width, 2 * thirdHeight),
                         strokeWidth = 2f
                     )
-
+                    val penColor = getPenColorByName(activePen)
+                    val tintColor = when (penColor) {
+                        is PenColor.Solid -> penColor.color
+                        else -> Color.Black
+                    }
                     if (drawMode) {
                         paths.fastForEach { pathData ->
                             drawPath(
-                                path = pathData.path, color = Color.Black
+                                path = pathData.path, color = tintColor
                             )
                         }
                         currentPath?.let {
                             drawPath(
-                                path = it.path, color = Color.Black
+                                path = it.path, color = tintColor
                             )
                         }
                     } else {
@@ -237,7 +274,7 @@ fun DrawScreen(
                             )
                             drawPath(
                                 path = normalizedPath.asComposePath(),
-                                color = Color.Black,
+                                color = tintColor,
                                 style = Stroke(width = 10f)
                             )
                         }
